@@ -1,0 +1,22 @@
+#!/bin/sh
+':' //; exec "$(command -v nodejs || command -v node)" "$0" "$@"
+
+
+function askName(cont) {
+    console.log("What's your name?");
+    process.stdin.setEncoding('utf8');
+	process.stdin.resume();
+    process.stdin.once('data', function (name) {
+	    process.stdin.pause();
+        cont(name.trim())
+    });
+}
+
+
+function greet(name) {
+    var greeting = "Hello, " + name + "!";
+    console.log(greeting);
+}
+
+
+askName(greet)

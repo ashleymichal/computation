@@ -1,0 +1,9 @@
+#!/usr/bin/env stack
+-- stack --install-ghc runghc
+
+
+main = askName >>= greet
+    where
+    askName = putStrLn "What's your name?" *> getLine
+    greet = putStrLn . greeting
+    greeting name = "Hello, " ++ name ++ "!"

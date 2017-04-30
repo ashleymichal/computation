@@ -1,0 +1,16 @@
+#!/usr/bin/env scala
+
+
+def askName: String = {
+   println("What's your name?")
+   io.StdIn.readLine
+}
+
+
+def greet(name: String): Unit = {
+   val greeting = s"""Hello, ${name}!"""
+   println(greeting)
+}
+
+
+greet(askName)
