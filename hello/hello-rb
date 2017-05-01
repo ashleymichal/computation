@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+
+def askName
+  puts "What's your name?\n"
+  gets.chomp()
+end
+
+def greet(name)
+  greeting = "Hello, " + name + "!"
+  puts greeting
+end
+
+greet(askName)
