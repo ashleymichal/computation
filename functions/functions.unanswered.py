@@ -29,7 +29,9 @@ addCurried = lambda a: lambda b: addUncurriedPy(a, b)
 
 # Writing a function in different forms for every function is tedious, so it
 # would be nice to have functions to help us generically.  Try to implement
-# them.
+# them.  These will be our first "higher-ordered functions," which are
+# functions that take other functions as input or return functions that are
+# themselves higher-order.
 
 curryPy = "TODO"
 
