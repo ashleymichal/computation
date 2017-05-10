@@ -105,15 +105,16 @@ assert(flip(moreArgs)("a")("b")("c")("d") == "b a c d")
 
 # We can make a function to compose two functions together:
 
-compose = "TODO"
+compose = lambda a: lambda b: lambda c: a(b(c))
 
+print(compose(addCurried("a"))(addCurried("b"))("c"))
 assert(compose(addCurried("a"))(addCurried("b"))("c") == "(a + (b + c))")
 
 # See if you can predict what the following return:
 
-assert(compose(flip(addCurried)("a"))(flip(addCurried)("b"))("c") == "TODO")
-assert(compose(flip(addCurried)("a"))((addCurried)("b"))("c") == "TODO")
-assert(compose((addCurried)("a"))(flip(addCurried)("b"))("c") == "TODO")
+assert(compose(flip(addCurried)("a"))(flip(addCurried)("b"))("c") == "((c + b) + a)")
+assert(compose(flip(addCurried)("a"))((addCurried)("b"))("c") == "((b + c) + a)")
+assert(compose((addCurried)("a"))(flip(addCurried)("b"))("c") == "(a + (c + b))")
 
 # We can write a similar function "andThen" to compose that takes arguments in
 # the reverse order.  See if you can write it in terms of "flip" and
