@@ -4,11 +4,11 @@
 # This exercise is to get used to using simple first-class functions
 # (lambdas).  Replace the "TODO" strings until all tests pass.
 
-identity = "TODO"
+identity = lambda a: a
 
 assert(identity("foo") == "foo")
 
-const = "TODO"
+const = lambda a: lambda b: a
 
 assert(const(True)("ignored"))
 
@@ -33,7 +33,7 @@ addCurried = lambda a: lambda b: addUncurriedPy(a, b)
 # functions that take other functions as input or return functions that are
 # themselves higher-order.
 
-curryPy = "TODO"
+curryPy = lambda a: lambda b: lambda c: a(b, c)
 
 assert(curryPy(addUncurriedPy)(1)(2) == "(1 + 2)")
 
@@ -45,12 +45,12 @@ add1 = curryPy(addUncurriedPy)(1)
 # And we can use this partially applied function repeatedly with different
 # remaining arguments:
 
-assert(add1(2) == "TODO")
-assert(add1(3) == "TODO")
+assert(add1(2) == "(1 + 2)")
+assert(add1(3) == "(1 + 3)")
 
 # Just as we can curry an uncurried function, we can uncurry a curried one:
 
-uncurryPy = "TODO"
+uncurryPy = lambda a: lambda b, c: a(b)(c)
 
 assert(uncurryPy(addCurried)(1, 2) == "(1 + 2)")
 
@@ -67,13 +67,13 @@ addUncurriedTuple = lambda t: addUncurriedPy(t[0], t[1])
 
 # See if you can curry this tuple-accepting function:
 
-curryTuple = "TODO"
+curryTuple = lambda a: lambda b: lambda c: a((b, c))
 
 assert(curryTuple(addUncurriedTuple)(1)(2) == "(1 + 2)")
 
 # You should be able to uncurry it too:
 
-uncurryTuple = "TODO"
+uncurryTuple = lambda a: lambda b: a(b[0])(b[1])
 
 assert(uncurryTuple(addCurried)((1, 2)) == "(1 + 2)")
 
@@ -84,14 +84,14 @@ assert(curryTuple(uncurryTuple(addCurried))(1)(2) == "(1 + 2)")
 
 # We could implement a "swap" function:
 
-swap = "TODO"
+swap = lambda a: lambda b, c: a(c, b)
 
 assert(swap(addUncurriedPy)(1, 2) == "(2 + 1)")
 
 # But swap only works on exactly 2-argument functions.  With currying, we can
 # write a similar function called "flip":
 
-flip = "TODO"
+flip = lambda a: lambda b: lambda c: a(c)(b)
 
 assert(flip(addCurried)("1")("2") == "(2 + 1)")
 
@@ -101,7 +101,7 @@ assert(flip(addCurried)("1")("2") == "(2 + 1)")
 moreArgs = lambda a: lambda b: lambda c: lambda d: \
     "{} {} {} {}".format(a, b, c, d)
 
-assert(flip(moreArgs)("a")("b")("c")("d") == "TODO")
+assert(flip(moreArgs)("a")("b")("c")("d") == "b a c d")
 
 # We can make a function to compose two functions together:
 
