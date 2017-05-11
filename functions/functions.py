@@ -107,7 +107,6 @@ assert(flip(moreArgs)("a")("b")("c")("d") == "b a c d")
 
 compose = lambda a: lambda b: lambda c: a(b(c))
 
-print(compose(addCurried("a"))(addCurried("b"))("c"))
 assert(compose(addCurried("a"))(addCurried("b"))("c") == "(a + (b + c))")
 
 # See if you can predict what the following return:
@@ -120,15 +119,15 @@ assert(compose((addCurried)("a"))(flip(addCurried)("b"))("c") == "(a + (c + b))"
 # the reverse order.  See if you can write it in terms of "flip" and
 # "compose":
 
-andThen = "TODO"
+andThen = lambda a: lambda b: lambda c: flip(compose)(a)(b)(c)
 
 assert(andThen(addCurried("a"))(addCurried("b"))("c") == "(b + (a + c))")
 
 # See if you can predict what the following return:
 
-assert(andThen(flip(addCurried)("a"))(flip(addCurried)("b"))("c") == "TODO")
-assert(andThen(flip(addCurried)("a"))((addCurried)("b"))("c") == "TODO")
-assert(andThen((addCurried)("a"))(flip(addCurried)("b"))("c") == "TODO")
+assert(andThen(flip(addCurried)("a"))(flip(addCurried)("b"))("c") == "((c + a) + b)")
+assert(andThen(flip(addCurried)("a"))((addCurried)("b"))("c") == "(b + (c + a))")
+assert(andThen((addCurried)("a"))(flip(addCurried)("b"))("c") == "((a + c) + b)")
 
 # That's all for now.  If you successfully replaced all the "TODO" strings,
 # you should be able to run this script and see the following message:
