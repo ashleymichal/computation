@@ -1,6 +1,12 @@
 Topics to cover
 ===============
 
+- Inheritance
+    - not needed
+        - inclusion polymorphism
+        - prototype polymorphism
+    - an alternative (universal quantification)
+
 - A class is just a curried function
 
 - Interface design
