@@ -73,7 +73,7 @@ assert(curryTuple(addUncurriedTuple)(1)(2) == "(1 + 2)")
 
 # You should be able to uncurry it too:
 
-uncurryTuple = lambda a: lambda b: a(b[0])(b[1])
+uncurryTuple = lambda a: lambda b: uncurryPy(a)(b[0], b[1])
 
 assert(uncurryTuple(addCurried)((1, 2)) == "(1 + 2)")
 
@@ -119,7 +119,7 @@ assert(compose((addCurried)("a"))(flip(addCurried)("b"))("c") == "(a + (c + b))"
 # the reverse order.  See if you can write it in terms of "flip" and
 # "compose":
 
-andThen = lambda a: lambda b: lambda c: flip(compose)(a)(b)(c)
+andThen = lambda a: flip(compose)(a)
 
 assert(andThen(addCurried("a"))(addCurried("b"))("c") == "(b + (a + c))")
 
