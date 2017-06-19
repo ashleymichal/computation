@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+
+def contains(i, s): return s(i)
+
+def containsAll(elems, s):
+    return "TODO"
+
+def containsNo(elems, s):
+    return "TODO"
+
+empty = return "TODO"
+
+def singleton(i):
+    return "TODO"
+
+def multiple(*elems):
+    return "TODO"
+
+def insert(i, s):
+    return "TODO"
+
+def remove(i, s):
+    return "TODO"
+
+def union(s1, s2):
+    return "TODO"
+
+def intersection(s1, s2):
+    return "TODO"
+
+
+assert(not contains(1, empty))
+
+assert(contains(1, singleton(1)))
+
+assert(
+    (lambda s: contains(1, s) and not contains(2, s))
+    (singleton(1)))
+
+assert(not contains(1, insert(1, empty)))
+
+assert(
+    (lambda s: contains(1, s) and not contains(2, s))
+    (insert(1, empty)))
+
+assert(not contains(1, remove(1, singleton(1))))
+
+assert(
+    (lambda s: contains(1, s) and not contains(2, s))
+    (remove(2, insert(1, singleton(2)))))
+
+assert(
+    (lambda s: containsAll([1, 2, 3, 4], s))
+    (union(multiple(1, 2), multiple(3, 4))))
+
+assert(
+    (lambda s: contains(2, s) and containsNo([1, 3], s))
+    (intersection(multiple(1, 2), multiple(2, 3))))

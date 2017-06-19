@@ -79,7 +79,7 @@ assert(not Set.singleton(1).remove(1).contains(1))
 
 assert(
     (lambda s: s.contains(1) and not s.contains(2))
-    (Set.singleton(1).remove(2)))
+    (Set.singleton(2).insert(1).remove(2)))
 
 assert(
     (lambda s: s.containsAll(1, 2, 3, 4))
