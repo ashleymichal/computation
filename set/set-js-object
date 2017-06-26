@@ -3,39 +3,51 @@
 
 const assert = require('assert');
 
-function MySet(contains) {
-  this.contains = contains
-
-  this.add = (newInt) => {
-    newContains = (int) => {
-      return int === newInt || this.contains(int)
-    }
-    return new MySet(newContains)
+function MySet() {
+  var that = this;
+  that.newSet = (contains_fn) => {
+    this.contains = contains_fn;
+    this.insert = integer => that.newSet(i => integer === i || contains_fn(i));
+    this.remove = integer => that.newSet(i => !integer === i || contains_fn(i));
+    return this;
   }
-  return this
+  that.empty = () => that.newSet(int => false)
+  that.singleton = (val) => that.newSet(int => val === int)
+  return that
 }
 
-MySet.empty = () => {
-  function contains(int) { return false }
-  return new MySet(contains);
-}
+// function MySet(contains) {
+//   this.contains = contains
+//
+//   this.add = (newInt) => {
+//     newContains = (int) => {
+//       return int === newInt || this.contains(int)
+//     }
+//     return new MySet(newContains)
+//   }
+//   return this
+// }
+//
+// MySet.empty = () => {
+//   function contains(int) { return false }
+//   return new MySet(contains);
+// }
+//
+// MySet.singleton = (int) => {
+//   function contains(int2) { return int === int2 }
+//   return new MySet(contains);
+// }
 
-MySet.singleton = (int) => {
-  function contains(int2) { return int === int2 }
-  return new MySet(contains);
-}
 
+assert(!MySet().empty().contains(1));
+assert(!MySet().empty().contains(2));
+assert(!MySet().empty().contains(3));
 
-assert(!MySet.empty().contains(1));
-assert(!MySet.empty().contains(2));
-assert(!MySet.empty().contains(3));
+assert(MySet().singleton(1).contains(1));
+assert(!MySet().singleton(1).contains(2));
 
-assert(MySet.singleton(1).contains(1));
-assert(!MySet.singleton(1).contains(2));
-
-assert(MySet.singleton(1).add(2).contains(1));
-assert(MySet.singleton(1).add(2).contains(2));
-assert(!MySet.singleton(1).add(2).contains(3));
+assert(MySet().singleton(1).insert(2).contains(1));
+assert(MySet().singleton(1).insert(2).contains(2));
+assert(!MySet().singleton(1).insert(2).contains(3));
 
 console.log('All good!');
-
