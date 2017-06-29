@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+
+# We want to encode the following algebraic data type:
+# 
+#    data List a = Nil | Cons { head :: a, tail :: List a }
+#
+# but in a language that doesn't have a good syntax for sum types (in this
+# case, Python).  Most languages popular in industry only have good support for
+# product types (grouping things together like with tuples or classes), but not
+# very good options for choosing from different possibilities.  We get some
+# built-in sum types, like a boolean type (which can either be true or false),
+# but we don't get good support for custom sum types.
+#
+# But sum types arise in programming all the times.  For instance, think about
+# JSON.  We might say something like
+#
+#    data Json
+#        = JString String 
+#        | JNumber Double
+#        | JBool Bool
+#        | JObject (Map String Json)
+#        | JArray [Json]
+#        | JNull
+#
+# With the small exception of using better underlying representations than
+# String and Double, this data type algebraically exactly matches the JSON
+# specification.
+#
+# But for now, let's start with our List, which only has two options.  How
+# might we encode a list in Python?  We're going to do a naive way that's often
+# done by people first getting into such encoding of sum types.  There's
+# actually some benefits from this approach (performance and stack-safety), but
+# at the expense of the implementation requiring some partial functions.
+#
+# We'll start with an interface that can tell us if we have a Nil or a Cons.
+# Then, if we have a Cons, then we'll have some methods to help us unpack
+# it into a head and a tail.  Here's what that looks like:
+
+class List:
+
+    def __init__(self, is_empty, head_fn, tail_fn):
+        self.__is_empty = is_empty
+        self.__head = head_fn
+        self.__tail = tail_fn
+
+    def is_empty(self): return self.__is_empty
+    def head(self): return self.__head()
+    def tail(self): return self.__tail()
+
+    # Now we'll make two constructors for this interface, one for nil (the
+    # empty list), and the other for cons.
+
+    @staticmethod
+    def nil():
+        def fail_head(): raise BaseException("no head on empty list")
+        def fail_tail(): raise BaseException("no tail on empty list")
+        return List(True, fail_head, fail_tail)
+
+    @staticmethod
+    def cons(head, tail):
+        return List(False, lambda: head, lambda: tail)
+
+    # Note, we're passing the head and tail to the List constructor as
+    # functions to delay the exceptions above being thrown unless you actually
+    # call head or tail on an empty list.
+   
+    # Now we're going to implement a very important function for any algebraic
+    # data type -- the catamorphism -- more colloquially called a "fold"
+    # function.  The one for list is often called "foldRight".
+    #
+    # The type signature for `foldRight` is:
+    #
+    #    foldRight : 
+    #         List a            # self
+    #         -> b              # ifEmpty
+    #         -> ((a, b) -> b)  # ifCons
+    #         -> b              # returned
+    #
+    # The `__repr__` function below is written in terms of `foldRight`.  See
+    # if you can implement `foldRight` such that the constructed lists at the
+    # bottom of the file print out.
+    # 
+    def foldRight(self, ifEmpty, ifCons):
+        raise BaseException("TODO")
+
+    def __repr__(self):
+        return "[" + \
+            self.foldRight(
+                ("]", True), 
+                lambda a, acc:
+                    (repr(a) + ("" if acc[1] else ", ") + acc[0], False))[0]
+
+print(List.nil())
+print(List.cons(1, List.cons(2, List.cons(3, List.nil()))))
