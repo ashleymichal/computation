@@ -94,5 +94,10 @@ class List:
                 lambda a, acc:
                     (repr(a) + ("" if acc[1] else ", ") + acc[0], False))[0]
 
-print(List.nil())
-print(List.cons(1, List.cons(2, List.cons(3, List.nil()))))
+emptyList = List.nil()
+threeElementList = List.cons(1, List.cons(2, List.cons(3, List.nil())))
+print(emptyList)
+print(threeElementList)
+
+print(threeElementList.foldRight(List.nil(), List.cons))
+
