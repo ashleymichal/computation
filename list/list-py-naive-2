@@ -168,11 +168,10 @@ class List:
     #     , (a, b) -> b  # ifCons
     #     ) -> b         # returned
     def foldRight(self, ifEmpty, ifCons):
-        if self.is_empty():
+        if self.is_nil():
             return ifEmpty
         else:
             return ifCons(self.head(), self.tail().foldRight(ifEmpty, ifCons))
-        # raise BaseException("TODO")
 
     # __repr__ :
     #     List a     # self
@@ -202,89 +201,127 @@ class List:
     #     List a  # self
     #     -> [a]  # returned
     def toPyList(self):
-        ifCons = lambda a, acc:
-            acc + a
-        return self.foldRight([], ifCons)
+        return self.foldRight(
+            [],
+            lambda a, acc:
+                [a] + acc
+        )
 
     # append :
     #     ( List a     # self
     #     , List a     # l
     #     ) -> List a  # returned
     def append(self, l):
-        raise BaseException("TODO")
+        return self.foldRight(
+            l,
+            lambda a, acc:
+                List.cons(a, acc)
+        )
 
     # length :
     #     List a  # self
     #     -> Int  # returned
     def length(self):
-        raise BaseException("TODO")
+        return self.foldRight(
+            0,
+            lambda a, acc:
+                1 + acc
+        )
 
     # all :
     #     ( List a        # self
     #     , a -> Boolean  # cond
     #     ) -> Boolean    # returned
     def all(self, cond):
-        raise BaseException("TODO")
+        return self.foldRight(
+            True,
+            lambda a, acc:
+                cond(a) and acc
+        )
 
     # any :
     #     ( List a        # self
     #     , a -> Boolean  # cond
     #     ) -> Boolean    # returned
     def any(self, cond):
-        raise BaseException("TODO")
+        return self.foldRight(
+            False,
+            lambda a, acc:
+                cond(a) or acc
+        )
 
     # map :
     #     ( List a     # self
     #     , a -> b     # f
     #     ) -> List b  # returned
     def map(self, f):
-        raise BaseException("TODO")
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                List.cons(f(a), acc)
+        )
 
     # flatMap :
     #     ( List a       # self
     #     , a -> List b  # f
     #     ) -> List b    # returned
     def flatMap(self, f):
-        raise BaseException("TODO")
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                f(a).append(acc)
+        )
 
     # flatten :
     #     List (List a)  # self
     #     -> List a      # returned
     def flatten(self):
-        raise BaseException("TODO")
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                a.append(acc)
+        )
 
     # keep :
     #     ( List a        # self
     #     , a -> Boolean  # should_keep (if true)
     #     ) -> List a     # returned
     def keep(self, should_keep):
-        raise BaseException("TODO")
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                should_keep(a) and List.cons(a, acc) or acc
+        )
 
     # discard :
     #     ( List a        # self
     #     , a -> Boolean  # should_discard (if true)
     #     ) -> List a     # returned
     def discard(self, should_discard):
-        raise BaseException("TODO")
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                should_discard(a) and acc or List.cons(a, acc)
+        )
 
     # headList :
     #     List a     # self
     #     -> List a  # returned (either empty or just a head)
     def headList(self):
-        raise BaseException("TODO")
+        return self.is_nil() and List.nil() or List.new(self.head())
 
     # headOrElse :
     #     List a  # self
     #     a       # default
     #     -> a    # returned (head or default)
     def headOrElse(self, default):
-        raise BaseException("TODO")
+        return self.is_nil() and default or self.head()
 
     # tailList :
     #     List a            # self
     #     -> List (List a)  # returned
     def tailList(self):
-        raise BaseException("TODO")
+        return self.is_nil() and List.nil() or List.new(self.tail())
 
     # Write `reverse` in terms of `foldLeft` to test both.
 
@@ -294,13 +331,20 @@ class List:
     #     , (b, a) -> b  # f
     #     ) -> b         # returned
     def foldLeft(self, z, f):
-        raise BaseException("TODO")
+        if self.is_nil():
+            return z
+        else:
+            return f(self.tail().foldLeft(z, f), self.head())
 
     # reverse :
     #     List a     # self
     #     -> List a  # returned
     def reverse(self):
-        raise BaseException("TODO")
+        return self.foldLeft(
+            List.nil(),
+            lambda acc, a:
+                List.cons(a, acc)
+        )
 
     # discardFirst :
     #     ( List a        # self
