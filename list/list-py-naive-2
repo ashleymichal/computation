@@ -276,21 +276,16 @@ class List:
     #     List (List a)  # self
     #     -> List a      # returned
     def flatten(self):
-        return self.foldRight(
-            List.nil(),
-            lambda a, acc:
-                a.append(acc)
-        )
+        return self.flatMap(lambda a: a)
 
     # keep :
     #     ( List a        # self
     #     , a -> Boolean  # should_keep (if true)
     #     ) -> List a     # returned
     def keep(self, should_keep):
-        return self.foldRight(
-            List.nil(),
-            lambda a, acc:
-                should_keep(a) and List.cons(a, acc) or acc
+        return self.flatMap(
+            lambda e:
+                should_keep(e) and List.new(e) or List.nil()
         )
 
     # discard :
@@ -308,7 +303,11 @@ class List:
     #     List a     # self
     #     -> List a  # returned (either empty or just a head)
     def headList(self):
-        return self.is_nil() and List.nil() or List.new(self.head())
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                List.new(a)
+        )
 
     # headOrElse :
     #     List a  # self
