@@ -2,6 +2,7 @@
 
 
 from functools import total_ordering
+from list_py_oo_tests import testList
 
 
 # We want to encode the following algebraic data type:
@@ -72,8 +73,8 @@ class List:
         def fail(msg): raise BaseException(msg)
         return List(
             True,
-            lambda: fail("head on empty list"),
-            lambda: fail("tail on empty list"))
+            lambda: fail("empty list has no head"),
+            lambda: fail("empty list has no tail"))
 
     # cons :
     #     (  a          # head
@@ -154,6 +155,24 @@ class List:
                 return (((self.head() <= other.head()) and
                          (self.tail() <= other.tail())))
 
+    # Notice how careful we have to be to make sure to call `is_nil` to check
+    # which case we have, otherwise we can have some exceptions thrown when we
+    # call head or tail. The following `match` method will do this check and
+    # calls for us. That way, we'll never call `head` or `tail` directly. This
+    # makes `match` a total function (one has a valid return value for every
+    # possible value of the input's type).
+
+    # match :
+    #     List a        # self
+    #     ->  b         #    ifNil
+    #     -> (          #    ifCons
+    #         ( a       #        head
+    #         , List a  #        tail
+    #         ) -> b    #        returned (ifCons)
+    #     ) -> b        #    returned
+    def match(self, ifNil, ifCons):
+        raise BaseException("TODO")
+
     # Now we're going to implement a very important function for any algebraic
     # data type -- the catamorphism -- more colloquially called a "fold"
     # function. The one for list is often called "foldRight".
@@ -168,11 +187,10 @@ class List:
     #     , (a, b) -> b  # ifCons
     #     ) -> b         # returned
     def foldRight(self, ifEmpty, ifCons):
-        if self.is_empty():
-            return ifEmpty
-        else:
-            return ifCons(self.head(), self.tail().foldRight(ifEmpty, ifCons))
-        # raise BaseException("TODO")
+        raise BaseException("TODO")
+
+    # It turns out you can write `match` in terms of `foldRight` or `foldRight`
+    # in terms of `match`. Try to do both.
 
     # __repr__ :
     #     List a     # self
@@ -185,26 +203,26 @@ class List:
                         (repr(a) + ("" if acc[1] else ", ") + acc[0],
                          False))[0])
 
+    # The remaining unimplemented functions can all be written in terms of
+    # `foldRight`, `match`, or each other. They have been loosely ordered with
+    # more simple ones earlier that can be used to implement later ones.
+    #
+    # You should not call `is_nil`, `head`, or `tail` at all. We've hidden
+    # these partial functions behind the total function `match`.
+    #
     # Now let's try to write as much as we can in terms of `foldRight` instead
-    # of using our encoding for pattern matching directly. We should find that
-    # `foldRight` is just as expressive, but sometimes not efficient or
-    # stack-safe. For now, don't worry about performance or stack-safety. Just
-    # practice using `foldRight`.
+    # of `match`. We should find that `foldRight` is just as expressive, but
+    # sometimes not efficient or stack-safe. For now, don't worry about
+    # performance or stack-safety. Just practice using `foldRight`.
     #
     # Remember, the trick with `foldRight` is that it replaces data
     # constructors with operations.
-    #
-    # The remaining unimplemented functions can all be written in terms of
-    # `foldRight` or each other. They have been loosely ordered with more
-    # simple ones earlier that can be used to implement later ones.
 
     # toPyList :
     #     List a  # self
     #     -> [a]  # returned
     def toPyList(self):
-        ifCons = lambda a, acc:
-            acc + a
-        return self.foldRight([], ifCons)
+        raise BaseException("TODO")
 
     # append :
     #     ( List a     # self
@@ -349,114 +367,4 @@ class List:
         raise BaseException("TODO")
 
 
-assert(List.new() == List.new())
-assert(List.new(1) == List.new(1))
-assert(not List.new() == List.new(1))
-assert(not List.new(1) == List.new())
-
-assert(List.new() <= List.new())
-assert(List.new(1) <= List.new(1))
-assert(List.new() <= List.new(1))
-assert(not List.new(1) <= List.new())
-assert(List.new(1) <= List.new(2))
-assert(not List.new(2) <= List.new(1))
-assert(List.new(1) <= List.new(1, 1))
-assert(not List.new(1, 1) <= List.new(1))
-
-assert(repr(List.new()) == '[]')
-assert(repr(List.new(1, 2, 3)) == '[1, 2, 3]')
-
-assert(List.new().toPyList() == [])
-assert(List.new(1, 2, 3).toPyList() == [1, 2, 3])
-
-assert(List.new(1, 2).append(List.new(3, 4)) == List.new(1, 2, 3, 4))
-
-assert(List.new().length() == 0)
-assert(List.new(1, 2 ,3).length() == 3)
-
-assert(List.new().all(lambda a: a == 3))
-assert(List.new(1, 2, 3, 4).all(lambda a: a > 0))
-assert(not List.new(1, 2, 3, 4).all(lambda a: a == 3))
-assert(not List.new(1, 2, 3, 4).all(lambda a: a == 5))
-
-assert(not List.new().any(lambda a: a == 3))
-assert(List.new(1, 2, 3, 4).any(lambda a: a == 2))
-assert(not List.new(1, 2, 3, 4).any(lambda a: a == 5))
-
-assert(List.new(1, 2).map(lambda x: x+1) == List.new(2, 3))
-
-assert(
-    List.new(1, 2)
-        .flatMap(lambda x: List.new(x*10, x*100))
-    == List.new(10, 100, 20, 200))
-
-assert(List.new(List.new()).flatten() == List.new())
-assert(
-    List.new(List.new(1, 2), List.new(3, 4))
-        .flatten()
-    == List.new(1, 2, 3, 4))
-
-assert(
-    List.new(1, 2, 3, 4)
-        .keep(lambda a: a % 2 == 0)
-    == List.new(2, 4))
-
-assert(
-    List.new(1, 2, 3, 4)
-        .discard(lambda a: a % 2 == 0)
-    == List.new(1, 3))
-
-assert(List.new().headList() == List.new())
-assert(List.new(1, 2, 3).headList() == List.new(1))
-assert(List.new().headList() == List.new())
-assert(List.new(1, 2, 3).headList() == List.new(1))
-
-assert(List.new().headOrElse(4) == 4)
-assert(List.new(1, 2, 3).headOrElse(4) == 1)
-
-assert(List.new().tailList() == List.new())
-assert(List.new(1, 2, 3).tailList() == List.new(List.new(2, 3)))
-
-assert(List.new().reverse() == List.new())
-assert(List.new(1, 2, 3).reverse() == List.new(3, 2, 1))
-
-assert(
-    List.new(1, 2, 3, 4)
-        .discardFirst(lambda a: a % 2 == 0)
-    == List.new(1, 3, 4))
-
-assert(
-    List.new(1, 2, 3, 4)
-        .takeWhile(lambda a: a < 3)
-    == List.new(1, 2))
-assert(
-    List.new(1, 2, 3, 4)
-        .takeWhile(lambda a: a > 5)
-    == List.new())
-
-assert(
-    List.new(1, 2, 3, 4)
-        .dropWhile(lambda a: a < 3)
-    == List.new(3, 4))
-assert(
-    List.new(1, 2, 3, 4)
-        .dropWhile(lambda a: a < 5)
-    == List.new())
-
-assert(List.new().drop(0) == List.new())
-assert(List.new(1, 2, 3, 4).drop(0) == List.new(1, 2, 3, 4))
-assert(List.new(1, 2, 3, 4).drop(2) == List.new(3, 4))
-assert(List.new(1, 2, 3, 4).drop(5) == List.new())
-
-assert(List.new().take(0) == List.new())
-assert(List.new(1, 2, 3, 4).take(0) == List.new())
-assert(List.new(1, 2, 3, 4).take(2) == List.new(1, 2))
-assert(List.new(1, 2, 3, 4).take(5) == List.new(1, 2, 3, 4))
-
-assert(
-    List.new(1, 2, 3)
-        .zipWith(List.new(10, 20, 30), lambda a, b: a + b)
-    == List.new(11, 22, 33))
-
-
-print("SUCCESS: all tests pass")
+testList(List)
