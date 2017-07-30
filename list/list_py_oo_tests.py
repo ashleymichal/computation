@@ -14,10 +14,10 @@ def testList(impl):
     assert(impl.new(1) <= impl.new(1, 1))
     assert(not impl.new(1, 1) <= impl.new(1))
 
-    assert(impl.new().match(1, 2) == 1)
+    assert(impl.new().match(1, lambda h, t: 2) == 1)
     assert(
         impl.new(1, 2, 3)
-            .match(impl.new(4), lambda h, t: (h, t))
+            .match((4, impl.new(5)), lambda h, t: (h, t))
         == (1, impl.new(2, 3)))
 
     assert(repr(impl.new()) == '[]')
