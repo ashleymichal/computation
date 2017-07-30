@@ -37,14 +37,15 @@ class List:
     # normally passed to constructors in Python. It captures the essence of
     # pattern matching but without recursion (unlike foldRight).
     #
-    # The `match` function takes two arguments: one for the "nil" case, and the
-    # other for "cons." In "cons" case, we know we'll have a head and tail so
-    # we pass in a function that consumed these two.
-
+    # Like the `match` function implemented for the naive encoding, this one
+    # takes two arguments: one for the "nil" case, and the other for "cons." In
+    # "cons" case, we know we'll have a head and tail so we pass in a function
+    # that consumed these two.
+    #
     # Here's a simple example of using match to define `is_nil` and `is_cons`.
     # Note that everything will be definable in terms of `match`. So to define
     # a list, we'll see that the only function we need on our List interface is
-    # just this one.
+    # just this one (we don't need the partial functions `head` or `tail`).
 
     # is_nil :
     #     List a      # self
@@ -62,10 +63,9 @@ class List:
     # is superior because it doesn't suffer from what's called "boolean
     # blindness."
 
-    # Now see if you can implement everything in this file. But if you already,
-    # did work for the previous encoding, you'll find a lot of answers there
-    # port directly over once if you wrote them in terms of `foldRight` or
-    # `foldLeft`.
+    # Now see if you can implement everything in this file. But if you already
+    # did work for the naive encoding, you'll find a lot of answers there port
+    # directly over.
 
     # nil : List a
     @staticmethod
