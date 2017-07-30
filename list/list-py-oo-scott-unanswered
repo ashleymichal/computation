@@ -282,6 +282,12 @@ assert(not List.new(2) <= List.new(1))
 assert(List.new(1) <= List.new(1, 1))
 assert(not List.new(1, 1) <= List.new(1))
 
+assert(List.new().match(1, 2) == 1)
+assert(
+    List.new(1, 2, 3)
+        .match(List.new(4), lambda h, t: (h, t))
+    == (1, List.new(2, 3)))
+
 assert(repr(List.new()) == '[]')
 assert(repr(List.new(1, 2, 3)) == '[1, 2, 3]')
 
