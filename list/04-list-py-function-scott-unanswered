@@ -16,7 +16,7 @@ from list_py_function_tests import testList
 #
 # So we'll have something like this recursively defined type:
 #
-#     type List a = forall b. (b, (a, List b) -> b) -> b
+#     type List a = forall b. (b, (a, List a) -> b) -> b
 #
 # Below, we'll remind you of this alias with "≡" in the type documentation.
 
