@@ -7,7 +7,7 @@ from list_py_oo_tests import testList
 
 # We want to encode the following algebraic data type:
 #
-#    data List a = Nil | Cons { head :: a, tail :: List a }
+#     data List a = Nil | Cons { head :: a, tail :: List a }
 #
 # but in a language that doesn't have a good syntax for sum types (in this
 # case, Python). Most languages popular in industry only have good support for
@@ -19,13 +19,13 @@ from list_py_oo_tests import testList
 # But sum types arise in programming all the times.  For instance, think about
 # JSON.  We might say something like
 #
-#    data Json
-#        = JString String
-#        | JNumber Double
-#        | JBool Bool
-#        | JObject (Map String Json)
-#        | JArray [Json]
-#        | JNull
+#     data Json
+#         = JString String
+#         | JNumber Double
+#         | JBool Bool
+#         | JObject (Map String Json)
+#         | JArray [Json]
+#         | JNull
 #
 # With the exception of using better underlying representations than String and
 # Double, this data type algebraically exactly matches the JSON specification.
@@ -47,50 +47,74 @@ class List:
     # approach.
 
     def __init__(self, is_nil, head, tail):
+        """
+        :type is_nil: Boolean
+        :type   head: () -> a
+        :type   tail: () -> List a
+        :rtype:      List a
+        """
         self.__is_nil = is_nil
         self.__head = head
         self.__tail = tail
 
     def is_nil(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
         return self.__is_nil
 
     def is_cons(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
         return not self.__is_nil
 
     def head(self):
+        """
+        :type self: List a
+        :rtype:     a
+        """
         return self.__head()
 
     def tail(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
         return self.__tail()
 
     # Now we'll make two constructors for this interface, one for nil (the
     # empty list), and the other for cons.
 
-    # nil : List a
     @staticmethod
     def nil():
+        """ :rtype: List a """
         def fail(msg): raise BaseException(msg)
         return List(
             True,
             lambda: fail("empty list has no head"),
             lambda: fail("empty list has no tail"))
 
-    # cons :
-    #     (  a          # head
-    #     ,  List a     # tail
-    #     ) -> List a   # returned
     @staticmethod
     def cons(head, tail):
+        """
+        :type head: a
+        :type tail: List a
+        :rtype:     List a
+        """
         return List(False, lambda: head, lambda: tail)
 
     # Here's a `new` function to construct lists with less syntax than using
     # `cons` and `nil` directly.
 
-    # new :
-    #     *a         # elems
-    #     -> List a  # returned
     @staticmethod
     def new(*elems):
+        """
+        :type elems: [a]
+        :rtype:      List a
+        """
         res = List.nil()
         for e in reversed(elems):
             res = List.cons(e, res)
@@ -98,11 +122,12 @@ class List:
 
     # For convenience, here's a method-based `cons`, which we'll call `push`.
 
-    # push :
-    #     ( List a     # self
-    #     , a          # elem
-    #     ) -> List a  # returned
     def push(self, elem):
+        """
+        :type self: List a
+        :type elem: a
+        :rtype:     List a
+        """
         return List.cons(elem, self)
 
     # And here's `__eq__` and `__le__` implemented for assertion testing, and
@@ -111,11 +136,12 @@ class List:
     # constructors, we need a way to test which one we have and safely extract
     # things out of it.
 
-    # __eq__ :
-    #     ( List a      # self
-    #     , List a      # other
-    #     ) -> Boolean  # returned
     def __eq__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
         if self.is_nil():
             if other.is_nil():
                 return True
@@ -140,11 +166,12 @@ class List:
                 return (((self.head() == other.head()) and
                          (self.tail() == other.tail())))
 
-    # __le__ :
-    #     ( List a      # self
-    #     , List a      # other
-    #     ) -> Boolean  # returned
     def __le__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
         if self.is_nil():
             return True
         else:
@@ -162,15 +189,13 @@ class List:
     # every
     # possible value of the input's type).
 
-    # match :
-    #     List a        # self
-    #     ->  b         #    ifNil
-    #     -> (          #    ifCons
-    #         ( a       #        head
-    #         , List a  #        tail
-    #         ) -> b    #        returned (ifCons)
-    #     ) -> b        #    returned
     def match(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, List a) -> b
+        :rtype:       b
+        """
         raise BaseException("TODO")
 
     # Now we're going to implement a very important function for any algebraic
@@ -181,21 +206,23 @@ class List:
     # you can implement `foldRight` such that that assertion for `__repr__`
     # passes.
 
-    # foldRight :
-    #     ( List a       # self
-    #     , b            # ifEmpty
-    #     , (a, b) -> b  # ifCons
-    #     ) -> b         # returned
-    def foldRight(self, ifEmpty, ifCons):
+    def foldRight(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, b) -> b
+        :rtype:       b
+        """
         raise BaseException("TODO")
 
     # It turns out you can write `match` in terms of `foldRight` or `foldRight`
     # in terms of `match`. Try to do both.
 
-    # __repr__ :
-    #     List a     # self
-    #     -> String  # returned
     def __repr__(self):
+        """
+        :type self: List a
+        :rtype:     String
+        """
         return ("[" +
                 self.foldRight(
                     ("]", True),
@@ -218,152 +245,170 @@ class List:
     # Remember, the trick with `foldRight` is that it replaces data
     # constructors with operations.
 
-    # toPyList :
-    #     List a  # self
-    #     -> [a]  # returned
     def toPyList(self):
+        """
+        :type self: List a
+        :rtype:     [a]
+        """
         raise BaseException("TODO")
 
-    # append :
-    #     ( List a     # self
-    #     , List a     # l
-    #     ) -> List a  # returned
     def append(self, l):
+        """
+        :type self: List a
+        :type    l: List a
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # length :
-    #     List a  # self
-    #     -> Int  # returned
     def length(self):
+        """
+        :type self: List a
+        :rtype:     Integer
+        """
         raise BaseException("TODO")
 
-    # all :
-    #     ( List a        # self
-    #     , a -> Boolean  # cond
-    #     ) -> Boolean    # returned
     def all(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
         raise BaseException("TODO")
 
-    # any :
-    #     ( List a        # self
-    #     , a -> Boolean  # cond
-    #     ) -> Boolean    # returned
     def any(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
         raise BaseException("TODO")
 
-    # map :
-    #     ( List a     # self
-    #     , a -> b     # f
-    #     ) -> List b  # returned
     def map(self, f):
+        """
+        :type self: List a
+        :type    f: a -> b
+        :rtype:     List b
+        """
         raise BaseException("TODO")
 
-    # flatMap :
-    #     ( List a       # self
-    #     , a -> List b  # f
-    #     ) -> List b    # returned
     def flatMap(self, f):
+        """
+        :type self: List a
+        :type    f: a -> List b
+        :rtype:     List b
+        """
         raise BaseException("TODO")
 
-    # flatten :
-    #     List (List a)  # self
-    #     -> List a      # returned
     def flatten(self):
+        """
+        :type self: List (List a)
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # keep :
-    #     ( List a        # self
-    #     , a -> Boolean  # should_keep (if true)
-    #     ) -> List a     # returned
     def keep(self, should_keep):
+        """
+        :type        self: List a
+        :type should_keep: a -> Boolean
+        :rtype:            List a
+        """
         raise BaseException("TODO")
 
-    # discard :
-    #     ( List a        # self
-    #     , a -> Boolean  # should_discard (if true)
-    #     ) -> List a     # returned
     def discard(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
         raise BaseException("TODO")
 
-    # headList :
-    #     List a     # self
-    #     -> List a  # returned (either empty or just a head)
     def headList(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # headOrElse :
-    #     List a  # self
-    #     a       # default
-    #     -> a    # returned (head or default)
     def headOrElse(self, default):
+        """
+        :type    self: List a
+        :type default: a
+        :rtype:        a
+        """
         raise BaseException("TODO")
 
-    # tailList :
-    #     List a            # self
-    #     -> List (List a)  # returned
     def tailList(self):
+        """
+        :type self: List a
+        :rtype:     List (List a)
+        """
         raise BaseException("TODO")
 
     # Write `reverse` in terms of `foldLeft` to test both.
 
-    # foldLeft :
-    #     ( List a       # self
-    #     , b            # z
-    #     , (b, a) -> b  # f
-    #     ) -> b         # returned
     def foldLeft(self, z, f):
+        """
+        :type self: List a
+        :type    z: b
+        :type    f: (b, a) -> b
+        :rtype:     b
+        """
         raise BaseException("TODO")
 
-    # reverse :
-    #     List a     # self
-    #     -> List a  # returned
     def reverse(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # discardFirst :
-    #     ( List a        # self
-    #     , a -> Boolean  # should_discard (if true)
-    #     ) -> List a     # returned
     def discardFirst(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
         raise BaseException("TODO")
 
-    # takeWhile :
-    #     ( List a        # self
-    #     , a -> Boolean  # should_take (if true)
-    #     ) -> List a     # returned
     def takeWhile(self, should_take):
+        """
+        :type        self: List a
+        :type should_take: a -> Boolean
+        :rtype:            List a
+        """
         raise BaseException("TODO")
 
-    # dropWhile :
-    #     ( List a        # self
-    #     , a -> Boolean  # should_drop (if true)
-    #     ) -> List a     # returned
     def dropWhile(self, should_drop):
+        """
+        :type        self: List a
+        :type should_drop: a -> Boolean
+        :rtype:            List a
+        """
         raise BaseException("TODO")
 
-    # drop :
-    #     ( List a     # self
-    #     , Integer    # n
-    #     ) -> List a  # returned
-    #
     def drop(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # take :
-    #     ( List a     # self
-    #     , Integer    # n
-    #     ) -> List a  # returned
-    #
     def take(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
         raise BaseException("TODO")
 
-    # zipWith :
-    #     ( List a       # self
-    #     , List b       # other
-    #     , (a, b) -> c  # f
-    #     ) -> List c    # returned
-    #
     def zipWith(self, other, f):
+        """
+        :type  self: List a
+        :type other: List b
+        :type     f: (a, b) -> c
+        :rtype:      List c
+        """
         raise BaseException("TODO")
 
 
