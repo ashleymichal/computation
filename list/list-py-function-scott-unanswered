@@ -1,0 +1,321 @@
+#!/usr/bin/env python
+
+
+from list_py_function_tests import testList
+
+
+# We've seen now a Scott-encoding for a list that in an object-oriented way
+# uses classes and methods.  When constructing these classes, we pass in
+# a key function `match`, which is then exposed as a method. And _everything_
+# else can be defined in terms of these constructors and this `match` method.
+#
+# In this exercise, we'll see that using classes and methods is not necessary.
+# If we only have on abstract method on the interface of our List (`match`),
+# why bother wrapping it in the instance of a class? Why not just call that
+# first-class function the List?
+#
+# So we'll have something like this recursively defined type:
+#
+#     type List a = forall b. (b, (a, List b) -> b) -> b
+#
+# Below, we'll remind you of this alias with "≡" in the type documentation.
+
+class List:
+
+    # Here's a couple of functions implemented to give you a hint of what we'll
+    # be doing.
+
+    @staticmethod
+    def match(self, ifNil, ifCons):
+        """
+        :type   self: List a ≡ forall c. (c, (a, List a) -> c) -> c
+        :type  ifNil: b
+        :type ifCons: (a, List a) -> b
+        :rtype:       b
+        """
+        return self(ifNil, ifCons)
+
+    @staticmethod
+    def nil():
+        """
+        :rtype: List a ≡ forall b. (b, (a, List a) -> b) -> b
+        """
+        return lambda ifNil, ifCons: ifNil
+
+    # Notice how everything now is a static method. Technically, we could
+    # define these all just normal functions, and not put them on a class. By
+    # making them static functions, it's just easier to reuse our tests for
+    # different exercises.
+
+    # Now try to implement all the rest of the functions. A lot of what you've
+    # done in previous exercises will port over, but method calls will need to
+    # be turned into normal functional calls.
+
+    @staticmethod
+    def cons(head, tail):
+        """
+        :type head: a
+        :type tail: List a
+        :rtype:     List a ≡ forall b. (b, (a, List a) -> b) -> b
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def foldRight(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, b) -> b
+        :rtype:       b
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def is_nil(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return List.match(self, True, lambda h, t: False)
+
+    @staticmethod
+    def is_cons(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return List.match(self, False, lambda h, t: True)
+
+    @staticmethod
+    def new(*elems):
+        """
+        :type elems: [a]
+        :rtype:      List a
+        """
+        res = List.nil()
+        for e in reversed(elems):
+            res = List.cons(e, res)
+        return res
+
+    # Because we're using plain functions, and not classes, there is no good
+    # `__eq__` definition possible. So we'll define our own `eq` function for
+    # testing equality of lists (used for testing).
+    #
+    # Notice how we have to pass in an equality test for the element of the
+    # list, which might be another list or a normal python object with a valid
+    # `__eq__` method.
+
+    @staticmethod
+    def eq(eq, self, other):
+        """
+        :type    eq: (a, a) -> Boolean
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
+        return List.match(
+            self,
+            List.match(other, True, lambda oh, ot: False),
+            lambda sh, st:
+                List.match(
+                    other,
+                    False,
+                    lambda oh, ot: eq(sh, oh) and List.eq(eq, st, ot)))
+
+    @staticmethod
+    def repr(self):
+        """
+        :type self: List a
+        :rtype:     String
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def toPyList(self):
+        """
+        :type self: List a
+        :rtype:     [a]
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def append(self, l):
+        """
+        :type self: List a
+        :type    l: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def length(self):
+        """
+        :type self: List a
+        :rtype:     Integer
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def all(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def any(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def map(self, f):
+        """
+        :type self: List a
+        :type    f: a -> b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def flatMap(self, f):
+        """
+        :type self: List a
+        :type    f: a -> List b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def flatten(self):
+        """
+        :type self: List (List a)
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def keep(self, should_keep):
+        """
+        :type        self: List a
+        :type should_keep: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def discard(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def headList(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def headOrElse(self, default):
+        """
+        :type    self: List a
+        :type default: a
+        :rtype:        a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def tailList(self):
+        """
+        :type self: List a
+        :rtype:     List (List a)
+        """
+        raise BaseException("TODO")
+
+    # Write `reverse` in terms of `foldLeft` to test both.
+
+    @staticmethod
+    def foldLeft(self, z, f):
+        """
+        :type self: List a
+        :type    z: b
+        :type    f: (b, a) -> b
+        :rtype:     b
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def reverse(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def discardFirst(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def takeWhile(self, should_take):
+        """
+        :type        self: List a
+        :type should_take: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def dropWhile(self, should_drop):
+        """
+        :type        self: List a
+        :type should_drop: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def drop(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def take(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    @staticmethod
+    def zipWith(self, other, f):
+        """
+        :type  self: List a
+        :type other: List b
+        :type     f: (a, b) -> c
+        :rtype:      List c
+        """
+        raise BaseException("TODO")
+
+
+testList(List)
