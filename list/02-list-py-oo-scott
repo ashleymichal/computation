@@ -1,0 +1,327 @@
+#!/usr/bin/env python
+
+
+from functools import total_ordering
+from list_py_oo_tests import testList
+
+
+# We want to encode the following algebraic data type:
+#
+#     data List a = Nil | Cons { head :: a, tail :: List a }
+#
+# We saw a naive way of encoding pattern matching into Python. But this
+# involved using partial functions like head and tail. What if these functions
+# weren't even provided?
+#
+# We're going to encode pattern matching more directly using first class
+# functions (Python lambdas). And with this encoding we should have an
+# implementation that uses no partial functions at all.  This encoding is
+# sometimes called a Scott encoding, named after Dana Scott.
+
+@total_ordering
+class List:
+
+    def __init__(self, match):
+        """
+        :type match: (b, (a, List a) -> b) -> b
+        :rtype:      List a
+        """
+        self.match = match
+
+    # The type signature of the match lambda is a more complex than what's
+    # normally passed to constructors in Python. It captures the essence of
+    # pattern matching but without recursion (unlike foldRight).
+    #
+    # Like the `match` function implemented for the naive encoding, this one
+    # takes two arguments: one for the "nil" case, and the other for "cons." In
+    # "cons" case, we know we'll have a head and tail so we pass in a function
+    # that consumed these two.
+    #
+    # Here's a simple example of using match to define `is_nil` and `is_cons`.
+    # Note that everything will be definable in terms of `match`. So to define
+    # a list, we'll see that the only function we need on our List interface is
+    # just this one (we don't need the partial functions `head` or `tail`).
+
+    def is_nil(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return self.match(True, lambda h, t: False)
+
+    def is_cons(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return self.match(False, lambda h, t: True)
+
+    # But you'll never have to use `is_nil` or `is_cons`. The `match` function
+    # is superior because it doesn't suffer from what's called "boolean
+    # blindness."
+
+    # Now see if you can implement everything in this file. But if you already
+    # did work for the naive encoding, you'll find a lot of answers there port
+    # directly over.
+
+    @staticmethod
+    def nil():
+        """ :rtype: List a """
+        return List(lambda n, c: n)
+
+    @staticmethod
+    def cons(head, tail):
+        """
+        :type head: a
+        :type tail: List a
+        :rtype:     List a
+        """
+        return List(lambda a, b: b(head, tail))
+
+    @staticmethod
+    def new(*elems):
+        """
+        :type elems: [a]
+        :rtype:      List a
+        """
+        new_list = List.nil()
+        for i in reversed(elems):
+            new_list = List.cons(i, new_list)
+        return new_list
+
+    def push(self, elem):
+        """
+        :type self: List a
+        :type elem: a
+        :rtype:     List a
+        """
+        return List.cons(elem, self)
+
+    def __eq__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
+        return self.match(
+                other.match(True, lambda a, b: False),
+                lambda a, b:
+                    other.match(
+                        False,
+                        lambda c, d:
+                            a == c and b == d
+                    )
+        )
+
+
+    def __le__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
+        return self.match(
+                True,
+                lambda a, b:
+                    other.match(
+                        False,
+                        lambda c, d:
+                            a <= c and b <= d
+                    )
+        )
+
+
+    def foldRight(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, b) -> b
+        :rtype:       b
+        """
+
+        return self.match(
+            ifNil,
+            lambda h, t:
+                ifCons(h, t.foldRight(ifNil, ifCons))
+        )
+
+    def __repr__(self):
+        """
+        :type self: List a
+        :rtype:     String
+        """
+        return ("[" +
+                self.foldRight(
+                    ("]", True),
+                    lambda a, acc:
+                        (repr(a) + ("" if acc[1] else ", ") + acc[0],
+                         False))[0])
+
+    def toPyList(self):
+        """
+        :type self: List a
+        :rtype:     [a]
+        """
+        raise BaseException("TODO")
+
+    def append(self, l):
+        """
+        :type self: List a
+        :type    l: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def length(self):
+        """
+        :type self: List a
+        :rtype:     Integer
+        """
+        raise BaseException("TODO")
+
+    def all(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    def any(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    def map(self, f):
+        """
+        :type self: List a
+        :type    f: a -> b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    def flatMap(self, f):
+        """
+        :type self: List a
+        :type    f: a -> List b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    def flatten(self):
+        """
+        :type self: List (List a)
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def keep(self, should_keep):
+        """
+        :type        self: List a
+        :type should_keep: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def discard(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    def headList(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def headOrElse(self, default):
+        """
+        :type    self: List a
+        :type default: a
+        :rtype:        a
+        """
+        raise BaseException("TODO")
+
+    def tailList(self):
+        """
+        :type self: List a
+        :rtype:     List (List a)
+        """
+        raise BaseException("TODO")
+
+    # Write `reverse` in terms of `foldLeft` to test both.
+
+    def foldLeft(self, z, f):
+        """
+        :type self: List a
+        :type    z: b
+        :type    f: (b, a) -> b
+        :rtype:     b
+        """
+        raise BaseException("TODO")
+
+    def reverse(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def discardFirst(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    def takeWhile(self, should_take):
+        """
+        :type        self: List a
+        :type should_take: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def dropWhile(self, should_drop):
+        """
+        :type        self: List a
+        :type should_drop: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def drop(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def take(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def zipWith(self, other, f):
+        """
+        :type  self: List a
+        :type other: List b
+        :type     f: (a, b) -> c
+        :rtype:      List c
+        """
+        raise BaseException("TODO")
+
+
+testList(List)

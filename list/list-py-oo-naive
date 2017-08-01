@@ -1,0 +1,502 @@
+#!/usr/bin/env python
+
+
+from functools import total_ordering
+
+
+# We want to encode the following algebraic data type:
+#
+#    data List a = Nil | Cons { head :: a, tail :: List a }
+#
+# but in a language that doesn't have a good syntax for sum types (in this
+# case, Python). Most languages popular in industry only have good support for
+# product types (grouping things together like with tuples or classes), but not
+# very good options for choosing from different possibilities. We get some
+# built-in sum types, like a boolean type (which can either be true or false),
+# but we don't get good support for custom sum types.
+#
+# But sum types arise in programming all the times.  For instance, think about
+# JSON.  We might say something like
+#
+#    data Json
+#        = JString String
+#        | JNumber Double
+#        | JBool Bool
+#        | JObject (Map String Json)
+#        | JArray [Json]
+#        | JNull
+#
+# With the small exception of using better underlying representations than
+# String and Double, this data type algebraically exactly matches the JSON
+# specification.
+#
+# But for now, let's start with our List, which only has two options. How might
+# we encode a list in Python? We'll start with an interface that can tell us if
+# we have a Nil or a Cons. Then, if we have a Cons, then we'll have some
+# methods to help us unpack it into a head and a tail. Here's what that looks
+# like:
+
+@total_ordering
+class List:
+
+    # Here's the interface of our abstraction -- a base set of values
+    # (`is_nil`, `head`, and `tail`) from which everything else can be derived.
+    # `head` and `tail` as unfortunately partial functions (the throw
+    # exceptions if called on an empty list), but we'll accept this for now.
+    # There's some benefits for performance and stack-safety with this
+    # approach.
+
+    def __init__(self, is_nil, head, tail):
+        self.__is_nil = is_nil
+        self.__head = head
+        self.__tail = tail
+
+    def is_nil(self):
+        return self.__is_nil
+
+    def is_cons(self):
+        return not self.__is_nil
+
+    def head(self):
+        return self.__head()
+
+    def tail(self):
+        return self.__tail()
+
+    # Now we'll make two constructors for this interface, one for nil (the
+    # empty list), and the other for cons.
+
+    # nil : List a
+    @staticmethod
+    def nil():
+        def fail(msg): raise BaseException(msg)
+        return List(
+            True,
+            lambda: fail("head on empty list"),
+            lambda: fail("tail on empty list"))
+
+    # cons :
+    #     (  a          # head
+    #     ,  List a     # tail
+    #     ) -> List a   # returned
+    @staticmethod
+    def cons(head, tail):
+        return List(False, lambda: head, lambda: tail)
+
+    # Here's a `new` function to construct lists with less syntax than using
+    # `cons` and `nil` directly.
+
+    # new :
+    #     *a         # elems
+    #     -> List a  # returned
+    @staticmethod
+    def new(*elems):
+        res = List.nil()
+        for e in reversed(elems):
+            res = List.cons(e, res)
+        return res
+
+    # For convenience, here's a method-based `cons`, which we'll call `push`.
+
+    # push :
+    #     ( List a     # self
+    #     , a          # elem
+    #     ) -> List a  # returned
+    def push(self, elem):
+        return List.cons(elem, self)
+
+    # And here's `__eq__` and `__le__` implemented for assertion testing, and
+    # to illustrate how our interface helps use get "pattern matching," which
+    # is an important feature of sum types. If we have multiple possible data
+    # constructors, we need a way to test which one we have and safely extract
+    # things out of it.
+
+    # __eq__ :
+    #     ( List a      # self
+    #     , List a      # other
+    #     ) -> Boolean  # returned
+    def __eq__(self, other):
+        if self.is_nil():
+            if other.is_nil():
+                return True
+            elif other.is_cons():
+                return False
+            #
+            # Note, a sum type is has a finite number of possibilities. In some
+            # languages that support sum types well, a checker can validate
+            # that all the cases have been addressed.
+            #
+            # This else block is needless because we've defined `is_cons` as
+            # the negation of `is_nil`.
+            else:
+                raise BaseException("should never reach here")
+        else:
+            if other.is_nil():
+                return False
+            else:
+                # Calling `head` and `tail` in this block is safe, because we
+                # know `is_cons` is true in this block. We're encoding pattern
+                # matching by convention in this way.
+                return (((self.head() == other.head()) and
+                         (self.tail() == other.tail())))
+
+    # __le__ :
+    #     ( List a      # self
+    #     , List a      # other
+    #     ) -> Boolean  # returned
+    def __le__(self, other):
+        if self.is_nil():
+            return True
+        else:
+            if other.is_nil():
+                return False
+            else:
+                return (((self.head() <= other.head()) and
+                         (self.tail() <= other.tail())))
+
+    # Now we're going to implement a very important function for any algebraic
+    # data type -- the catamorphism -- more colloquially called a "fold"
+    # function. The one for list is often called "foldRight".
+    #
+    # The `__repr__` function below is written in terms of `foldRight`. See if
+    # you can implement `foldRight` such that that assertion for `__repr__`
+    # passes.
+
+    # foldRight :
+    #     ( List a       # self
+    #     , b            # ifEmpty
+    #     , (a, b) -> b  # ifCons
+    #     ) -> b         # returned
+    def foldRight(self, ifEmpty, ifCons):
+        if self.is_nil():
+            return ifEmpty
+        else:
+            return ifCons(self.head(), self.tail().foldRight(ifEmpty, ifCons))
+
+    # __repr__ :
+    #     List a     # self
+    #     -> String  # returned
+    def __repr__(self):
+        return ("[" +
+                self.foldRight(
+                    ("]", True),
+                    lambda a, acc:
+                        (repr(a) + ("" if acc[1] else ", ") + acc[0],
+                         False))[0])
+
+    # Now let's try to write as much as we can in terms of `foldRight` instead
+    # of using our encoding for pattern matching directly. We should find that
+    # `foldRight` is just as expressive, but sometimes not efficient or
+    # stack-safe. For now, don't worry about performance or stack-safety. Just
+    # practice using `foldRight`.
+    #
+    # Remember, the trick with `foldRight` is that it replaces data
+    # constructors with operations.
+    #
+    # The remaining unimplemented functions can all be written in terms of
+    # `foldRight` or each other. They have been loosely ordered with more
+    # simple ones earlier that can be used to implement later ones.
+
+    # toPyList :
+    #     List a  # self
+    #     -> [a]  # returned
+    def toPyList(self):
+        return self.foldRight(
+            [], 
+            lambda a, acc:
+                [a] + acc
+        )
+
+    # append :
+    #     ( List a     # self
+    #     , List a     # l
+    #     ) -> List a  # returned
+    def append(self, l):
+        return self.foldRight(
+            l,
+            lambda a, acc:
+                List.cons(a, acc)
+        )
+
+    # length :
+    #     List a  # self
+    #     -> Int  # returned
+    def length(self):
+        return self.foldRight(
+            0,
+            lambda a, acc:
+                1 + acc
+        )
+
+    # all :
+    #     ( List a        # self
+    #     , a -> Boolean  # cond
+    #     ) -> Boolean    # returned
+    def all(self, cond):
+        return self.foldRight(
+            True,
+            lambda a, acc:
+                cond(a) and acc
+        )
+
+    # any :
+    #     ( List a        # self
+    #     , a -> Boolean  # cond
+    #     ) -> Boolean    # returned
+    def any(self, cond):
+        return self.foldRight(
+            False,
+            lambda a, acc:
+                cond(a) or acc
+        )
+
+    # map :
+    #     ( List a     # self
+    #     , a -> b     # f
+    #     ) -> List b  # returned
+    def map(self, f):
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                List.cons(f(a), acc)
+        )
+
+    # flatMap :
+    #     ( List a       # self
+    #     , a -> List b  # f
+    #     ) -> List b    # returned
+    def flatMap(self, f):
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                f(a).append(acc)
+        )
+
+    # flatten :
+    #     List (List a)  # self
+    #     -> List a      # returned
+    def flatten(self):
+        return self.flatMap(lambda a: a)
+
+    # keep :
+    #     ( List a        # self
+    #     , a -> Boolean  # should_keep (if true)
+    #     ) -> List a     # returned
+    def keep(self, should_keep):
+        return self.flatMap(
+            lambda e:
+                should_keep(e) and List.new(e) or List.nil()
+        )
+
+    # discard :
+    #     ( List a        # self
+    #     , a -> Boolean  # should_discard (if true)
+    #     ) -> List a     # returned
+    def discard(self, should_discard):
+        return self.foldRight(
+            List.nil(),
+            lambda a, acc:
+                should_discard(a) and acc or List.cons(a, acc)
+        )
+
+    # headList :
+    #     List a     # self
+    #     -> List a  # returned (either empty or just a head)
+    def headList(self):
+        return self.is_nil() and List.nil() or List.new(self.head())
+
+    # headOrElse :
+    #     List a  # self
+    #     a       # default
+    #     -> a    # returned (head or default)
+    def headOrElse(self, default):
+        return self.is_nil() and default or self.head()
+
+    # tailList :
+    #     List a            # self
+    #     -> List (List a)  # returned
+    def tailList(self):
+        return self.is_nil() and List.nil() or List.new(self.tail())
+
+    # Write `reverse` in terms of `foldLeft` to test both.
+
+    # foldLeft :
+    #     ( List a       # self
+    #     , b            # z
+    #     , (b, a) -> b  # f
+    #     ) -> b         # returned
+    def foldLeft(self, z, f):
+        if self.is_nil():
+            return z
+        else:
+            return f(self.tail().foldLeft(z, f), self.head())
+
+    # reverse :
+    #     List a     # self
+    #     -> List a  # returned
+    def reverse(self):
+        return self.foldLeft(
+            List.nil(),
+            lambda acc, a:
+                List.cons(a, acc)
+        )
+
+    # discardFirst :
+    #     ( List a        # self
+    #     , a -> Boolean  # should_discard (if true)
+    #     ) -> List a     # returned
+    def discardFirst(self, should_discard):
+        raise BaseException("TODO")
+
+    # takeWhile :
+    #     ( List a        # self
+    #     , a -> Boolean  # should_take (if true)
+    #     ) -> List a     # returned
+    def takeWhile(self, should_take):
+        raise BaseException("TODO")
+
+    # dropWhile :
+    #     ( List a        # self
+    #     , a -> Boolean  # should_drop (if true)
+    #     ) -> List a     # returned
+    def dropWhile(self, should_drop):
+        raise BaseException("TODO")
+
+    # drop :
+    #     ( List a     # self
+    #     , Integer    # n
+    #     ) -> List a  # returned
+    #
+    def drop(self, n):
+        raise BaseException("TODO")
+
+    # take :
+    #     ( List a     # self
+    #     , Integer    # n
+    #     ) -> List a  # returned
+    #
+    def take(self, n):
+        raise BaseException("TODO")
+
+    # zipWith :
+    #     ( List a       # self
+    #     , List b       # other
+    #     , (a, b) -> c  # f
+    #     ) -> List c    # returned
+    #
+    def zipWith(self, other, f):
+        raise BaseException("TODO")
+
+
+assert(List.new() == List.new())
+assert(List.new(1) == List.new(1))
+assert(not List.new() == List.new(1))
+assert(not List.new(1) == List.new())
+
+assert(List.new() <= List.new())
+assert(List.new(1) <= List.new(1))
+assert(List.new() <= List.new(1))
+assert(not List.new(1) <= List.new())
+assert(List.new(1) <= List.new(2))
+assert(not List.new(2) <= List.new(1))
+assert(List.new(1) <= List.new(1, 1))
+assert(not List.new(1, 1) <= List.new(1))
+
+assert(repr(List.new()) == '[]')
+assert(repr(List.new(1, 2, 3)) == '[1, 2, 3]')
+
+assert(List.new().toPyList() == [])
+assert(List.new(1, 2, 3).toPyList() == [1, 2, 3])
+
+assert(List.new(1, 2).append(List.new(3, 4)) == List.new(1, 2, 3, 4))
+
+assert(List.new().length() == 0)
+assert(List.new(1, 2 ,3).length() == 3)
+
+assert(List.new().all(lambda a: a == 3))
+assert(List.new(1, 2, 3, 4).all(lambda a: a > 0))
+assert(not List.new(1, 2, 3, 4).all(lambda a: a == 3))
+assert(not List.new(1, 2, 3, 4).all(lambda a: a == 5))
+
+assert(not List.new().any(lambda a: a == 3))
+assert(List.new(1, 2, 3, 4).any(lambda a: a == 2))
+assert(not List.new(1, 2, 3, 4).any(lambda a: a == 5))
+
+assert(List.new(1, 2).map(lambda x: x+1) == List.new(2, 3))
+
+assert(
+    List.new(1, 2)
+        .flatMap(lambda x: List.new(x*10, x*100))
+    == List.new(10, 100, 20, 200))
+
+assert(List.new(List.new()).flatten() == List.new())
+assert(
+    List.new(List.new(1, 2), List.new(3, 4))
+        .flatten()
+    == List.new(1, 2, 3, 4))
+
+assert(
+    List.new(1, 2, 3, 4)
+        .keep(lambda a: a % 2 == 0)
+    == List.new(2, 4))
+
+assert(
+    List.new(1, 2, 3, 4)
+        .discard(lambda a: a % 2 == 0)
+    == List.new(1, 3))
+
+assert(List.new().headList() == List.new())
+assert(List.new(1, 2, 3).headList() == List.new(1))
+assert(List.new().headList() == List.new())
+assert(List.new(1, 2, 3).headList() == List.new(1))
+
+assert(List.new().headOrElse(4) == 4)
+assert(List.new(1, 2, 3).headOrElse(4) == 1)
+
+assert(List.new().tailList() == List.new())
+assert(List.new(1, 2, 3).tailList() == List.new(List.new(2, 3)))
+
+assert(List.new().reverse() == List.new())
+print(List.new(1, 2, 3)))
+assert(List.new(1, 2, 3).reverse() == List.new(3, 2, 1))
+
+assert(
+    List.new(1, 2, 3, 4)
+        .discardFirst(lambda a: a % 2 == 0)
+    == List.new(1, 3, 4))
+
+assert(
+    List.new(1, 2, 3, 4)
+        .takeWhile(lambda a: a < 3)
+    == List.new(1, 2))
+assert(
+    List.new(1, 2, 3, 4)
+        .takeWhile(lambda a: a > 5)
+    == List.new())
+
+assert(
+    List.new(1, 2, 3, 4)
+        .dropWhile(lambda a: a < 3)
+    == List.new(3, 4))
+assert(
+    List.new(1, 2, 3, 4)
+        .dropWhile(lambda a: a < 5)
+    == List.new())
+
+assert(List.new().drop(0) == List.new())
+assert(List.new(1, 2, 3, 4).drop(0) == List.new(1, 2, 3, 4))
+assert(List.new(1, 2, 3, 4).drop(2) == List.new(3, 4))
+assert(List.new(1, 2, 3, 4).drop(5) == List.new())
+
+assert(List.new().take(0) == List.new())
+assert(List.new(1, 2, 3, 4).take(0) == List.new())
+assert(List.new(1, 2, 3, 4).take(2) == List.new(1, 2))
+assert(List.new(1, 2, 3, 4).take(5) == List.new(1, 2, 3, 4))
+
+assert(
+    List.new(1, 2, 3)
+        .zipWith(List.new(10, 20, 30), lambda a, b: a + b)
+    == List.new(11, 22, 33))
+
+
+print("SUCCESS: all tests pass")

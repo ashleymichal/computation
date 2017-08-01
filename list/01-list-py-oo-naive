@@ -1,0 +1,421 @@
+#!/usr/bin/env python
+
+
+from functools import total_ordering
+from list_py_oo_tests import testList
+
+
+# We want to encode the following algebraic data type:
+#
+#     data List a = Nil | Cons { head :: a, tail :: List a }
+#
+# but in a language that doesn't have a good syntax for sum types (in this
+# case, Python). Most languages popular in industry only have good support for
+# product types (grouping things together like with tuples or classes), but not
+# very good options for choosing from different possibilities. We get some
+# built-in sum types, like a boolean type (which can either be true or false),
+# but we don't get good support for custom sum types.
+#
+# But sum types arise in programming all the times.  For instance, think about
+# JSON.  We might say something like
+#
+#     data Json
+#         = JString String
+#         | JNumber Double
+#         | JBool Bool
+#         | JObject (Map String Json)
+#         | JArray [Json]
+#         | JNull
+#
+# With the exception of using better underlying representations than String and
+# Double, this data type algebraically exactly matches the JSON specification.
+#
+# But for now, let's start with our List, which only has two options. How might
+# we encode this list in Python? We'll start with an interface that can tell us
+# if we have a Nil or a Cons. Then, if we have a Cons, then we'll have some
+# methods to help us unpack it into a head and a tail. Here's what that looks
+# like:
+
+@total_ordering
+class List:
+
+    # Here's the interface of our abstraction -- a base set of values
+    # (`is_nil`, `head`, and `tail`) from which everything else can be derived.
+    # `head` and `tail` as unfortunately partial functions (the throw
+    # exceptions if called on an empty list), but we'll accept this for now.
+    # There's some benefits for performance and stack-safety with this
+    # approach.
+
+    def __init__(self, is_nil, head, tail):
+        """
+        :type is_nil: Boolean
+        :type   head: () -> a
+        :type   tail: () -> List a
+        :rtype:      List a
+        """
+        self.__is_nil = is_nil
+        self.__head = head
+        self.__tail = tail
+
+    def is_nil(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return self.__is_nil
+
+    def is_cons(self):
+        """
+        :type self: List a
+        :rtype:     Boolean
+        """
+        return not self.__is_nil
+
+    def head(self):
+        """
+        :type self: List a
+        :rtype:     a
+        """
+        return self.__head()
+
+    def tail(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        return self.__tail()
+
+    # Now we'll make two constructors for this interface, one for nil (the
+    # empty list), and the other for cons.
+
+    @staticmethod
+    def nil():
+        """ :rtype: List a """
+        def fail(msg): raise BaseException(msg)
+        return List(
+            True,
+            lambda: fail("empty list has no head"),
+            lambda: fail("empty list has no tail"))
+
+    @staticmethod
+    def cons(head, tail):
+        """
+        :type head: a
+        :type tail: List a
+        :rtype:     List a
+        """
+        return List(False, lambda: head, lambda: tail)
+
+    # Here's a `new` function to construct lists with less syntax than using
+    # `cons` and `nil` directly.
+
+    @staticmethod
+    def new(*elems):
+        """
+        :type elems: [a]
+        :rtype:      List a
+        """
+        res = List.nil()
+        for e in reversed(elems):
+            res = List.cons(e, res)
+        return res
+
+    # For convenience, here's a method-based `cons`, which we'll call `push`.
+
+    def push(self, elem):
+        """
+        :type self: List a
+        :type elem: a
+        :rtype:     List a
+        """
+        return List.cons(elem, self)
+
+    # And here's `__eq__` and `__le__` implemented for assertion testing, and
+    # to illustrate how our interface helps us get "pattern matching," which is
+    # an important feature of sum types. If we have multiple possible data
+    # constructors, we need a way to test which one we have and safely extract
+    # things out of it.
+
+    def __eq__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
+        if self.is_nil():
+            if other.is_nil():
+                return True
+            elif other.is_cons():
+                return False
+            #
+            # Note, a sum type is has a finite number of possibilities. In some
+            # languages that support sum types well, a checker can validate
+            # that all the cases have been addressed.
+            #
+            # This else block is needless because we've defined `is_cons` as
+            # the negation of `is_nil`.
+            else:
+                raise BaseException("should never reach here")
+        else:
+            if other.is_nil():
+                return False
+            else:
+                # Calling `head` and `tail` in this block is safe, because we
+                # know `is_cons` is true in this block. We're encoding pattern
+                # matching by convention in this way.
+                return (((self.head() == other.head()) and
+                         (self.tail() == other.tail())))
+
+    def __le__(self, other):
+        """
+        :type  self: List a
+        :type other: List a
+        :rtype:      Boolean
+        """
+        if self.is_nil():
+            return True
+        else:
+            if other.is_nil():
+                return False
+            else:
+                return (((self.head() <= other.head()) and
+                         (self.tail() <= other.tail())))
+
+    # Notice how careful we have to be to make sure to call `is_nil` to check
+    # which case we have, otherwise we can have some exceptions thrown when we
+    # call head or tail. The following `match` method will do this check and
+    # calls for us. That way, we'll never call `head` or `tail` directly. This
+    # makes `match` a total function (one that has a valid return value for
+    # every
+    # possible value of the input's type).
+
+    def match(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, List a) -> b
+        :rtype:       b
+        """
+        if self.is_nil():
+            return ifNil
+        else:
+            return ifCons(self.head(), self.tail())
+
+    # Now we're going to implement a very important function for any algebraic
+    # data type -- the catamorphism -- more colloquially called a "fold"
+    # function. The one for list is often called "foldRight".
+    #
+    # The `__repr__` function below is written in terms of `foldRight`. See if
+    # you can implement `foldRight` such that that assertion for `__repr__`
+    # passes.
+
+    def foldRight(self, ifNil, ifCons):
+        """
+        :type   self: List a
+        :type  ifNil: b
+        :type ifCons: (a, b) -> b
+        :rtype:       b
+        """
+        if self.is_nil():
+            return ifNil
+        else:
+            return ifCons(self.head(), self.tail().foldRight(ifNil, ifCons))
+
+    # It turns out you can write `match` in terms of `foldRight` or `foldRight`
+    # in terms of `match`. Try to do both.
+
+    def __repr__(self):
+        """
+        :type self: List a
+        :rtype:     String
+        """
+        return ("[" +
+                self.foldRight(
+                    ("]", True),
+                    lambda a, acc:
+                        (repr(a) + ("" if acc[1] else ", ") + acc[0],
+                         False))[0])
+
+    # The remaining unimplemented functions can all be written in terms of
+    # `foldRight`, `match`, or each other. They have been loosely ordered with
+    # more simple ones earlier that can be used to implement later ones.
+    #
+    # You should not call `is_nil`, `head`, or `tail` at all. We've hidden
+    # these partial functions behind the total function `match`.
+    #
+    # Now let's try to write as much as we can in terms of `foldRight` instead
+    # of `match`. We should find that `foldRight` is just as expressive, but
+    # sometimes not efficient or stack-safe. For now, don't worry about
+    # performance or stack-safety. Just practice using `foldRight`.
+    #
+    # Remember, the trick with `foldRight` is that it replaces data
+    # constructors with operations.
+
+    def toPyList(self):
+        """
+        :type self: List a
+        :rtype:     [a]
+        """
+        raise BaseException("TODO")
+
+    def append(self, l):
+        """
+        :type self: List a
+        :type    l: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def length(self):
+        """
+        :type self: List a
+        :rtype:     Integer
+        """
+        raise BaseException("TODO")
+
+    def all(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    def any(self, cond):
+        """
+        :type self: List a
+        :type cond: a -> Boolean
+        :rtype:     Boolean
+        """
+        raise BaseException("TODO")
+
+    def map(self, f):
+        """
+        :type self: List a
+        :type    f: a -> b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    def flatMap(self, f):
+        """
+        :type self: List a
+        :type    f: a -> List b
+        :rtype:     List b
+        """
+        raise BaseException("TODO")
+
+    def flatten(self):
+        """
+        :type self: List (List a)
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def keep(self, should_keep):
+        """
+        :type        self: List a
+        :type should_keep: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def discard(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    def headList(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def headOrElse(self, default):
+        """
+        :type    self: List a
+        :type default: a
+        :rtype:        a
+        """
+        raise BaseException("TODO")
+
+    def tailList(self):
+        """
+        :type self: List a
+        :rtype:     List (List a)
+        """
+        raise BaseException("TODO")
+
+    # Write `reverse` in terms of `foldLeft` to test both.
+
+    def foldLeft(self, z, f):
+        """
+        :type self: List a
+        :type    z: b
+        :type    f: (b, a) -> b
+        :rtype:     b
+        """
+        raise BaseException("TODO")
+
+    def reverse(self):
+        """
+        :type self: List a
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def discardFirst(self, should_discard):
+        """
+        :type           self: List a
+        :type should_discard: a -> Boolean
+        :rtype:               List a
+        """
+        raise BaseException("TODO")
+
+    def takeWhile(self, should_take):
+        """
+        :type        self: List a
+        :type should_take: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def dropWhile(self, should_drop):
+        """
+        :type        self: List a
+        :type should_drop: a -> Boolean
+        :rtype:            List a
+        """
+        raise BaseException("TODO")
+
+    def drop(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def take(self, n):
+        """
+        :type self: List a
+        :type    n: Integer
+        :rtype:     List a
+        """
+        raise BaseException("TODO")
+
+    def zipWith(self, other, f):
+        """
+        :type  self: List a
+        :type other: List b
+        :type     f: (a, b) -> c
+        :rtype:      List c
+        """
+        raise BaseException("TODO")
+
+
+testList(List)
