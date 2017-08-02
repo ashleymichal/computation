@@ -54,8 +54,8 @@ class List:
         :rtype:      List a
         """
         self.__is_nil = is_nil
-        self.__head = head
-        self.__tail = tail
+        self.head = head
+        self.tail = tail
 
     def is_nil(self):
         """
@@ -70,20 +70,6 @@ class List:
         :rtype:     Boolean
         """
         return not self.__is_nil
-
-    def head(self):
-        """
-        :type self: List a
-        :rtype:     a
-        """
-        return self.__head()
-
-    def tail(self):
-        """
-        :type self: List a
-        :rtype:     List a
-        """
-        return self.__tail()
 
     # Now we'll make two constructors for this interface, one for nil (the
     # empty list), and the other for cons.
