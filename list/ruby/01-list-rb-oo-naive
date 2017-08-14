@@ -1,0 +1,273 @@
+#!/usr/bin/env ruby
+require_relative './list_rb_oo_tests'
+
+class List
+  # :type is_nil?: Boolean
+  # :type   head: () -> a
+  # :type   tail: () -> List a
+  # :rtype:      List a
+  def initialize(is_nil, head, tail)
+    @is_nil = is_nil
+    @head = head
+    @tail = tail
+  end
+
+  # :rtype:     Boolean
+  def is_nil?
+    @is_nil
+  end
+
+  # :rtype:     Boolean
+  def is_cons?
+    !@is_nil
+  end
+
+  # :rtype:     a
+  def head
+    @head.()
+  end
+
+  # :rtype:     List a
+  def tail
+    @tail.()
+  end
+
+  # CONSTRUCTORS
+
+  # :rtype: List a
+  def List.nil()
+    List.new(
+      true,
+      -> { raise "empty list has no head" },
+      -> { raise "empty list has no tail" }
+    )
+  end
+
+  # :type head: a
+  # :type tail: List a
+  # :rtype:     List a
+  def List.cons(head, tail)
+    List.new(false, -> { head }, -> { tail })
+  end
+
+  # Here's a `build` function to construct lists with less syntax than using
+  # `cons` and `nil` directly.
+
+  # :type elems: [a]
+  # :rtype:      List a
+  def List.build(*elems)
+    res = List.nil
+    elems.reverse.each { |e| res = List.cons(e, res) }
+    res
+  end
+
+  # For convenience, here's a method-based `cons`, which we'll call `push`.
+
+  # :type elem: a
+  # :rtype:     List a
+  def push(elem)
+    List.cons(elem, self)
+  end
+
+  # And here's `__eq__` and `__le__` implemented for assertion testing, and
+  # to illustrate how our interface helps us get "pattern matching," which is
+  # an important feature of sum types. If we have multiple possible data
+  # constructors, we need a way to test which one we have and safely extract
+  # things out of it.
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def ==(other)
+    if self.is_nil?
+      if other.is_nil?
+        true
+      elsif other.is_cons?
+        false
+      #
+      # Note, a sum type is has a finite number of possibilities. In some
+      # languages that support sum types well, a checker can validate
+      # that all the cases have been addressed.
+      #
+      # This else block is needless because we've defined `is_cons` as
+      # the negation of `is_nil?`.
+      else
+        raise "should never reach here"
+      end
+    else
+      if other.is_nil?
+        false
+      else
+        # Calling `head` and `tail` in this block is safe, because we
+        # know `is_cons` is true in this block. We're encoding pattern
+        # matching by convention in this way.
+        (((self.head == other.head) &&
+          (self.tail == other.tail)))
+      end
+    end
+  end
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def <=(other)
+    if self.is_nil?
+      true
+    else
+      if other.is_nil?
+        false
+      else
+        ((self.head <= other.head) &&
+         (self.tail <= other.tail))
+      end
+    end
+  end
+
+  # Notice how careful we have to be to make sure to call `is_nil?` to check
+  # which case we have, otherwise we can have some exceptions thrown when we
+  # call head or tail. The following `match` method will do this check and
+  # calls for us. That way, we'll never call `head` or `tail` directly. This
+  # makes `match` a total function (one that has a valid return value for
+  # every
+  # possible value of the input's type).
+
+  # :type  ifNil: b
+  # :type ifCons: (a, List a) -> b
+  # :rtype:       b
+  def match
+    -> (ifNil, ifCons) {
+      if self.is_nil?
+        ifNil
+      else
+        ifCons.(self.head(), self.tail())
+      end
+    }
+  end
+
+  # Now we're going to implement a very important function for any algebraic
+  # data type -- the catamorphism -- more colloquially called a "fold"
+  # function. The one for list is often called "foldRight".
+  #
+  # The `__repr__` function below is written in terms of `foldRight`. See if
+  # you can implement `foldRight` such that that assertion for `__repr__`
+  # passes.
+
+  # :type  ifNil: b
+  # :type ifCons: (a, b) -> b
+  # :rtype:       b
+  def foldRight(ifNil, ifCons)
+    if self.is_nil?
+      ifNil
+    else
+      ifCons.(self.head, self.tail.foldRight(ifNil, ifCons))
+    end
+  end
+
+  # It turns out you can write `match` in terms of `foldRight` or `foldRight`
+  # in terms of `match`. Try to do both.
+
+  # :type self: List a
+  # :rtype:     String
+  def to_s
+    ("[" +
+      foldRight(
+        ["]", true],      # ifNil
+        -> a, acc {       # ifCons
+          [a.to_s + (acc[1] ? "" : ", ") + acc[0], false]
+        }
+      )[0]
+    )
+  end
+
+  # The remaining unimplemented functions can all be written in terms of
+  # `foldRight`, `match`, or each other. They have been loosely ordered with
+  # more simple ones earlier that can be used to implement later ones.
+  #
+  # You should not call `is_nil?`, `head`, or `tail` at all. We've hidden
+  # these partial functions behind the total function `match`.
+  #
+  # Now let's try to write as much as we can in terms of `foldRight` instead
+  # of `match`. We should find that `foldRight` is just as expressive, but
+  # sometimes not efficient or stack-safe. For now, don't worry about
+  # performance or stack-safety. Just practice using `foldRight`.
+  #
+  # Remember, the trick with `foldRight` is that it replaces data
+  # constructors with operations.
+
+  # :type self: List a
+  # :rtype:     [a]
+  def toArray
+    foldRight([], -> (a, acc) { [a].concat(acc) })
+  end
+
+  # :type    l: List a
+  # :rtype:     List a
+  def append l
+    foldRight(l, -> (a, acc) { List.cons(a, acc) })
+  end
+
+  # :rtype:     Integer
+  def length
+    foldRight(0, -> (a, acc) { 1 + acc })
+  end
+
+  # :type condition: a -> Boolean
+  # :rtype:     Boolean
+  def all condition
+    foldRight(true, -> (a, acc) { condition.(a) && acc })
+  end
+
+  # :type condition: a -> Boolean
+  # :rtype:     Boolean
+  def any condition
+    foldRight(false, -> (a, acc) { condition.(a) || acc })
+  end
+
+  # :type    f: a -> b
+  # :rtype:     List b
+  def map f
+    foldRight(List.nil, -> (a, acc) { List.cons(f.(a), acc) })
+  end
+
+  # :type    f: a -> List b
+  # :rtype:     List b
+  def flatMap f
+    foldRight(List.nil, -> (a, acc) { f.(a).append(acc) })
+  end
+
+  # :rtype:     List a
+  def flatten
+    flatMap(-> a { a })
+  end
+
+  # :type should_keep: a -> Boolean
+  # :rtype:            List a
+  def keep should_keep
+    flatMap(-> e { should_keep.(e) && List.build(e) || List.nil() })
+  end
+
+  # :type should_discard: a -> Boolean
+  # :rtype:               List a
+  def discard should_discard
+    foldRight(List.nil, -> (a, acc) { should_discard.(a) && acc || List.cons(a, acc) })
+  end
+
+  # :rtype:     List a
+  def headList
+    foldRight(List.nil, -> (a, acc) { List.build(a) })
+  end
+
+  # :type default: a
+  # :rtype:        a
+  def headOrElse default
+    foldRight(default, -> (a, acc) { a })
+  end
+
+  # :rtype:     List (List a)
+  def tailList
+    foldRight(
+      List.nil,
+      -> (a, acc) { List.build(self.tail) }
+    )
+  end
+end
+
+testList(List)

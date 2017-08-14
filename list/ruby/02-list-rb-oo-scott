@@ -1,0 +1,256 @@
+#!/usr/bin/env ruby
+
+
+# from functools import total_ordering
+require_relative './list_rb_oo_tests'
+
+
+# We want to encode the following algebraic data type:
+#
+#     data List a = Nil | Cons { head :: a, tail :: List a }
+#
+# We saw a naive way of encoding pattern matching into Ruby. But this
+# involved using partial functions like head and tail. What if these functions
+# weren't even provided?
+#
+# We're going to encode pattern matching more directly using first class
+# functions (Ruby ->s). And with this encoding we should have an
+# implementation that uses no partial functions at all.  This encoding is
+# sometimes called a Scott encoding, named after Dana Scott.
+
+class List
+  attr_reader :match
+
+  # :type match: (b, (a, List a) -> b) -> b
+  # :rtype:      List a
+  def initialize match
+    @match = match
+  end
+
+  # The type signature of the match lambda is a more complex than what's
+  # normally passed to constructors in Ruby. It captures the essence of
+  # pattern matching but without recursion (unlike foldRight).
+  #
+  # Like the `match` function implemented for the naive encoding, this one
+  # takes two arguments: one for the "nil" case, and the other for "cons." In
+  # "cons" case, we know we'll have a head and tail so we pass in a function
+  # that consumed these two.
+  #
+  # Here's a simple example of using match to define `is_nil` and `is_cons`.
+  # Note that everything will be definable in terms of `match`. So to define
+  # a list, we'll see that the only function we need on our List interface is
+  # just this one (we don't need the partial functions `head` or `tail`).
+
+  # :rtype:     Boolean
+  def is_nil
+    match.(true, -> (h, t) { false })
+  end
+
+  # :rtype:     Boolean
+  def is_cons
+    match.(false, -> (h, t) { true })
+  end
+
+  # But you'll never have to use `is_nil` or `is_cons`. The `match` function
+  # is superior because it doesn't suffer from what's called "boolean
+  # blindness."
+
+  # Now see if you can implement everything in this file. But if you already
+  # did work for the naive encoding, you'll find a lot of answers there port
+  # directly over.
+
+  # :rtype: List a
+  def List.nil
+    match = -> (n, c) { n }
+
+    List.new(match)
+  end
+
+  # :type head: a
+  # :type tail: List a
+  # :rtype:     List a
+  def List.cons(head, tail)
+    match = -> (a, b) { b.(head, tail) }
+
+    List.new(match)
+  end
+
+  # :type elems: [a]
+  # :rtype:      List a
+  def List.build(*elems)
+    new_list = List.nil()
+    elems.reverse.each do |elem|
+      new_list = List.cons(elem, new_list)
+    end
+    new_list
+  end
+
+  # :type elem: a
+  # :rtype:     List a
+  def push elem
+    List.cons(elem, self)
+  end
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def ==(other)
+    match.(
+      other.match.(true, -> (a, b) { false }),
+      -> (a, b) {
+        other.match.(
+          false,
+          -> (c, d) { a == c and b == d }
+        )
+      }
+    )
+  end
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def <=(other)
+    match.(
+      true,
+      -> (a, b) {
+        other.match.(
+          false,
+          -> (c, d) { a <= c and b <= d }
+        )
+      }
+    )
+  end
+
+  # :type  ifNil: b
+  # :type ifCons: (a, b) -> b
+  # :rtype:       b
+  def foldRight(ifNil, ifCons)
+    match.(
+      ifNil,
+      -> (h, t) { ifCons.(h, t.foldRight(ifNil, ifCons)) }
+    )
+  end
+
+  # :rtype:     String
+  def to_s
+    ("[" +
+    foldRight(
+      ["]", true],
+      -> (a, acc) do
+        [a.to_s + (acc[1] ? "" : ", ") + acc[0], false]
+      end
+    )[0])
+  end
+
+  # :rtype:     [a]
+  def toArray
+    match.(
+      [],
+      -> (h, t) { [h] + t.toArray }
+    )
+  end
+
+  # :type    l: List a
+  # :rtype:     List a
+  def append l
+    # match.(
+    #   l,
+    #   -> (h, t) { List.cons(h, t) }
+    # )
+    foldRight(
+      l,
+      -> (a, acc) { List.cons(a, acc) }
+    )
+  end
+
+  # :rtype:     Integer
+  def length
+    match.(
+      0,
+      -> (h, t) { 1 + t.length }
+    )
+  end
+
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def all condition
+    match.(
+      true,
+      -> (h, t) { condition.(h) && t.all(condition) }
+    )
+  end
+
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def any condition
+    match.(
+      false,
+      -> (h, t) { condition.(h) || t.any(condition) }
+    )
+  end
+
+  # :type    f: a -> b
+  # :rtype:     List b
+  def map f
+    match.(
+      List.nil,
+      -> (h, t) { List.cons(f.(h), t.map(f)) }
+    )
+  end
+
+  # :type    f: a -> List b
+  # :rtype:     List b
+  def flatMap f
+    match.(
+      List.nil,
+      -> (h, t) { f.(h).append(t.flatMap(f)) }
+    )
+  end
+
+  # :rtype:     List a
+  def flatten
+    flatMap(-> a { a })
+  end
+
+  # :type should_keep: a -> Boolean
+  # :rtype:            List a
+  def keep should_keep
+    flatMap(-> e { should_keep.(e) && List.build(e) || List.nil() })
+  end
+
+  # :type should_discard: a -> Boolean
+  # :rtype:               List a
+  def discard should_discard
+    match.(
+      List.nil,
+      -> (h, t) {
+        should_discard.(h) ? t.discard(should_discard) : List.cons(h, t.discard(should_discard))
+      }
+    )
+  end
+
+  # :rtype:     List a
+  def headList
+    match.(
+      List.nil,
+      -> (h, t) { List.build(h) }
+    )
+  end
+
+  # :type default: a
+  # :rtype:        a
+  def headOrElse default
+    match.(
+      default,
+      -> (h, t) { h }
+    )
+  end
+
+  # :rtype:     List (List a)
+  def tailList
+    match.(
+      List.nil,
+      -> (h, t) { List.build(t) }
+    )
+  end
+end
+
+testList(List)

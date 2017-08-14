@@ -1,0 +1,244 @@
+#!/usr/bin/env ruby
+require_relative './list_rb_oo_tests'
+
+module List
+  # :type   list: List a ≡ forall c. (c, (a, List a) -> c) -> c
+  # :type  ifNil: b
+  # :type ifCons: (a, List a) -> b
+  # :rtype:       b
+  def self.match(list, ifNil, ifCons)
+    list.(ifNil, ifCons)
+  end
+
+  # :rtype: List a ≡ forall b. (b, (a, List a) -> b) -> b
+  def self.nil
+    -> (ifNil, ifCons) { ifNil }
+  end
+
+  # :type head: a
+  # :type tail: List a
+  # :rtype:     List a ≡ forall b. (b, (a, List a) -> b) -> b
+  def self.cons(head, tail)
+    -> (ifNil, ifCons) { ifCons.(head, tail) }
+  end
+
+  # :type   list: List a
+  # :type  ifNil: b
+  # :type ifCons: (a, b) -> b
+  # :rtype:       b
+  def self.foldRight(list, ifNil, ifCons)
+    List.match(
+      list,
+      -> (h, t) { ifCons.(h, foldRight(t, ifNil, ifCons)) }
+    )
+  end
+
+  # :type list: List a
+  # :rtype:     Boolean
+  def self.is_nil(list)
+    List.match(list, true, -> (h, t) { false })
+  end
+
+  # :type list: List a
+  # :rtype:     Boolean
+  def self.is_cons(list)
+    List.match(list, false, -> (h, t) { true })
+  end
+
+  # :type elems: [a]
+  # :rtype:      List a
+  def self.build(*elems)
+    res = List.nil()
+    elems.reverse.each do |elem|
+      res = List.cons(e, res)
+    end
+    res
+  end
+
+  # Because we're using plain functions, and not classes, there is no good
+  # `__eq__` definition possible. So we'll define our own `eq` function for
+  # testing equality of lists (used for testing).
+  #
+  # Notice how we have to pass in an equality test for the element of the
+  # list, which might be another list or a normal python object with a valid
+  # `__eq__` method.
+
+  # :type    eq: (a, a) -> Boolean
+  # :type  list: List a
+  # :type other: List a
+  # :rtype:      Boolean
+  def self.==(eq, list, other)
+    List.match(
+      list,
+      List.match(other, true, -> (otherHead, otherTail) { false }),
+      -> (listHead, listTail) {
+        List.match(
+          other,
+          false,
+          -> (otherHead, otherTail) do
+            eq(listHead, otherHead) && List.eq(eq, listTail, otherTail)
+          end
+        )
+      }
+    )
+  end
+
+  # :type list: List a
+  # :rtype:     String
+  def self.to_s(list)
+    "[" + List.foldRight(
+      list,
+      ["]", true],
+      -> (a, acc) {
+        [a.to_s + (acc[1] ? "" : ", ") + acc[0], false]
+      }
+    )[0]
+  end
+
+  # :type list: List a
+  # :rtype:     [a]
+  def self.toArray(list)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type    l: List a
+  # :rtype:     List a
+  def self.append(list, l)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :rtype:     Integer
+  def self.length(list)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def self.all(list, cond)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def self.any(list, cond)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type    f: a -> b
+  # :rtype:     List b
+  def self.map(list, f)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type    f: a -> List b
+  # :rtype:     List b
+  def self.flatMap(list, f)
+    raise "TODO"
+  end
+
+  # :type list: List (List a)
+  # :rtype:     List a
+  def self.flatten(list)
+    raise "TODO"
+  end
+
+  # :type        list: List a
+  # :type should_keep: a -> Boolean
+  # :rtype:            List a
+  def self.keep(list, should_keep)
+    raise "TODO"
+  end
+
+  # :type           list: List a
+  # :type should_discard: a -> Boolean
+  # :rtype:               List a
+  def self.discard(list, should_discard)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :rtype:     List a
+  def self.headList(list)
+    raise "TODO"
+  end
+
+  # :type    list: List a
+  # :type default: a
+  # :rtype:        a
+  def self.headOrElse(list, default)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :rtype:     List (List a)
+  def self.tailList(list)
+    raise "TODO"
+  end
+
+  # Write `reverse` in terms of `foldLeft` to test both.
+
+  # :type list: List a
+  # :type    z: b
+  # :type    f: (b, a) -> b
+  # :rtype:     b
+  def self.foldLeft(list, z, f)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :rtype:     List a
+  def self.reverse(list)
+    raise "TODO"
+  end
+
+  # :type           list: List a
+  # :type should_discard: a -> Boolean
+  # :rtype:               List a
+  def self.discardFirst(list, should_discard)
+    raise "TODO"
+  end
+
+  # :type        list: List a
+  # :type should_take: a -> Boolean
+  # :rtype:            List a
+  def self.takeWhile(list, should_take)
+    raise "TODO"
+  end
+
+  # :type        list: List a
+  # :type should_drop: a -> Boolean
+  # :rtype:            List a
+  def self.dropWhile(list, should_drop)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type    n: Integer
+  # :rtype:     List a
+  def self.drop(list, n)
+    raise "TODO"
+  end
+
+  # :type list: List a
+  # :type    n: Integer
+  # :rtype:     List a
+  def self.take(list, n)
+    raise "TODO"
+  end
+
+  # :type  list: List a
+  # :type other: List b
+  # :type     f: (a, b) -> c
+  # :rtype:      List c
+  def self.zipWith(list, other, f)
+    raise "TODO"
+  end
+end
+
+testList(List)

@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+
+#     data OptionalTrueFalse bool = Unanswered | Answered { value :: bool }
+
+class OptionalTrueFalse
+  attr_reader :match
+
+  # :type match: (b, (bool) -> b) -> b
+  # :rtype:      List a
+  def initialize match
+    @match = match
+  end
+
+  # :rtype: List a
+  def OptionalTrueFalse.unanswered
+    match = -> (n, s) { n }
+
+    OptionalTrueFalse.new(match)
+  end
+
+  # :type bool: bool
+  # :rtype:     OptionalTrueFalse bool
+  def OptionalTrueFalse.answered(bool)
+    match = -> (n, s) { s.(bool) }
+
+    OptionalTrueFalse.new(match)
+  end
+
+  # :type elems: [a]
+  # :rtype:      List a
+  def OptionalTrueFalse.build(bool = nil)
+    if bool.nil?
+      OptionalTrueFalse.unanswered
+    else
+      OptionalTrueFalse.answered(bool)
+  end
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def ==(other)
+    match.(
+      other.match.(true, -> a { false }),
+      -> a {
+        other.match.(
+          false,
+          -> (b) { a == b }
+        )
+      }
+    )
+  end
+
+  # :rtype:     String
+  def to_s
+    match.(
+      "unanswered",
+      -> a { a ? "True" : "False" }
+    )
+  end
+
+  # :rtype:     [a]
+  def toBoolOrNil
+    match.(
+      nil,
+      -> a { a }
+    )
+  end
+
+  # :type    l: List a
+  # :rtype:     List a
+  def append l
+    # match.(
+    #   l,
+    #   -> (h, t) { List.cons(h, t) }
+    # )
+    foldRight(
+      l,
+      -> (a, acc) { List.cons(a, acc) }
+    )
+  end
+
+  # :rtype:     Integer
+  def length
+    match.(
+      0,
+      -> (h, t) { 1 + t.length }
+    )
+  end
+
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def all condition
+    match.(
+      true,
+      -> (h, t) { condition.(h) && t.all(condition) }
+    )
+  end
+
+  # :type cond: a -> Boolean
+  # :rtype:     Boolean
+  def any condition
+    match.(
+      false,
+      -> (h, t) { condition.(h) || t.any(condition) }
+    )
+  end
+
+  # :type    f: a -> b
+  # :rtype:     List b
+  def map f
+    match.(
+      List.nil,
+      -> (h, t) { List.cons(f.(h), t.map(f)) }
+    )
+  end
+
+  # :type    f: a -> List b
+  # :rtype:     List b
+  def flatMap f
+    match.(
+      List.nil,
+      -> (h, t) { f.(h).append(t.flatMap(f)) }
+    )
+  end
+
+  # :rtype:     List a
+  def flatten
+    flatMap(-> a { a })
+  end
+
+  # :type should_keep: a -> Boolean
+  # :rtype:            List a
+  def keep should_keep
+    flatMap(-> e { should_keep.(e) && List.build(e) || List.nil() })
+  end
+
+  # :type should_discard: a -> Boolean
+  # :rtype:               List a
+  def discard should_discard
+    match.(
+      List.nil,
+      -> (h, t) {
+        should_discard.(h) ? t.discard(should_discard) : List.cons(h, t.discard(should_discard))
+      }
+    )
+  end
+
+  # :rtype:     List a
+  def headList
+    match.(
+      List.nil,
+      -> (h, t) { List.build(h) }
+    )
+  end
+
+  # :type default: a
+  # :rtype:        a
+  def headOrElse default
+    match.(
+      default,
+      -> (h, t) { h }
+    )
+  end
+
+  # :rtype:     List (List a)
+  def tailList
+    match.(
+      List.nil,
+      -> (h, t) { List.build(t) }
+    )
+  end
+end
+
+testList(List)

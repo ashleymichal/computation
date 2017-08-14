@@ -26,6 +26,7 @@ def testList(impl):
     assert(impl.new().toPyList() == [])
     assert(impl.new(1, 2, 3).toPyList() == [1, 2, 3])
 
+    print(impl.new(1, 2).append(impl.new(3, 4)))
     assert(impl.new(1, 2).append(impl.new(3, 4)) == impl.new(1, 2, 3, 4))
 
     assert(impl.new().length() == 0)

@@ -162,7 +162,11 @@ class List:
         :type self: List a
         :rtype:     [a]
         """
-        raise BaseException("TODO")
+        return self.match(
+            [],
+            lambda h, t:
+                [h] + t.toPyList()
+        )
 
     def append(self, l):
         """
@@ -170,7 +174,11 @@ class List:
         :type    l: List a
         :rtype:     List a
         """
-        raise BaseException("TODO")
+        return self.foldRight(
+            l,
+            lambda a, acc:
+                List.cons(a, acc)
+        )
 
     def length(self):
         """
