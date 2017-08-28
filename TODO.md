@@ -14,6 +14,11 @@ Topics to cover
     - should implementation-agnostic libraries go on the trait?
 
 - Generalize the Option data structure in Ruby or Python using the Scott encoding
+    - data Maybe a = None | Some a
+    - data Either a b = Left a | Right b
+    - data Bool = True | False
+    - data Pair a b = Pair a b
+    - data Nel a = NelNil a | NelCons a (Nel a)
 
 - Laziness and Performance in Haskell
 
