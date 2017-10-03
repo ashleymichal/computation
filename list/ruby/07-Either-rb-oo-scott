@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+#     data Either a = None | Some { value :: a }
+
+class Either
+  attr_reader :match
+
+  # :type match: (b, (a) -> b) -> b
+  # :rtype:      List a
+  def initialize match
+    @match = match
+  end
+
+  # :rtype: List a
+  def Either.left(a)
+    match = -> (l, s) { l.(a) }
+
+    Either.new(match)
+  end
+
+  # :type a: a
+  # :rtype:     Either a
+  def Either.right(a)
+    match = -> (l, s) { s.(a) }
+
+    Either.new(match)
+  end
+
+  # :type other: List a
+  # :rtype:      Boolean
+  def ==(other)
+    match.(
+      -> a {
+        other.match.(-> a { true }, -> a { false }),
+      }
+      -> a {
+        other.match.(
+          -> b { false },
+          -> (b) { a == b }
+        )
+      }
+    )
+  end
+
+  # :rtype:     String
+  def to_s
+    match.(
+      -> a { "Left<#{a.to_s}>" },
+      -> a { "Right<#{a.to_s}>" }
+    )
+  end
