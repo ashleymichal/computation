@@ -25,11 +25,11 @@ lFoldR' :: b -> (a -> b -> b) -> List a -> b
 lFoldR' ifNil ifCons list =
     case list of
         Nil      -> ifNil
-        Cons h t -> ifCons h (lFoldR'' ifNil ifCons t)
+        Cons h t -> ifCons h (lFoldR' ifNil ifCons t)
 
 lFoldR'' :: b -> (a -> b -> b) -> List a -> b
 lFoldR'' ifNil ifCons list = lMatch ifNil ifCons' list
-    where ifCons' h t = ifCons h (lFoldR' ifNil ifCons t)
+    where ifCons' h t = ifCons h (lFoldR'' ifNil ifCons t)
 
 lSum :: List Int -> Int
 lSum = lFoldR 0 (+)
@@ -39,4 +39,32 @@ toHsList = lFoldR [] (:)
 
 toList :: [a] -> List a
 toList = foldr Cons Nil
+
+lLength :: List a -> Int
+lLength = lFoldR 0 addOne
+    where addOne _h t = t + 1
+
+lAll :: (a -> Bool) -> List a -> Bool
+lAll condition = lFoldR True both
+    where both a b = (condition a) && b
+
+lAny :: (a -> Bool) -> List a -> Bool
+lAny condition = lFoldR False either'
+    where either' a b = (condition a) || b
+
+lMap :: (a -> b) -> List a -> List b
+lMap _f Nil       = Nil
+lMap f (Cons h t) = Cons (f h) (lMap f t)
+
+lMap' :: (a -> b) -> List a -> List b
+lMap' f list =
+    case list of
+        Nil      -> Nil
+        Cons h t -> Cons (f h) (lMap' f t)
+
+lMap'' :: (a -> b) -> List a -> List b
+lMap'' f = lMatch Nil $ \h t -> Cons (f h) (lMap'' f t)
+
+lMap''' :: (a -> b) -> List a -> List b
+lMap''' f = lFoldR Nil $ \h t -> Cons (f h) t
 
