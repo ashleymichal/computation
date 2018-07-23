@@ -1,0 +1,4 @@
+rec {
+  fix = f: let x = f x; in x;
+  factorial = fix (fac: n: if n == 1 then 1 else fac (n - 1) * n);
+}

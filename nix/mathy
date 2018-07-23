@@ -1,0 +1,8 @@
+rec {
+  op = x: y: x + y;
+  mult = x: y: if (x == 1) then y else op y (mult (x -1) y);
+}
+
+{
+  mathy = fix (self: { op = x: y: x + y;  mult = x: y: if (x == 1) then y else self.op y (self.mult (x -1) y); })
+}
