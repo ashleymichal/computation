@@ -12,8 +12,6 @@
 #
 # So we have a few ways we can play around with defining `fix` in Nix.
 
-with builtins;
-
 let
 
     fix-let-outer   =              f: f (fix-let-outer f);
