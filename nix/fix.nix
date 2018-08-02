@@ -6,7 +6,7 @@
 # language-level support to define them.  Nix has two language constructs that
 # are recursive:
 #
-#    1) let bindings 
+#    1) let bindings
 #
 #    2) attribute sets annotated with the "rec" keyword.
 #
@@ -14,23 +14,37 @@
 
 let
 
-    fix-let-outer   =              f: f (fix-let-outer f);
-    fix-let-inner   =              f: let x = f x; in x;
-    fix-attr-nonrec = (    { fix = f: let x = f x; in x; }).fix;
-    fix-attr-rec    = (rec { fix = f: f (fix f);         }).fix;
+    fix-let-outer      =              f: f (fix-let-outer f);
+    fix-let-outer'     =              f: f (f (f (fix-let-outer f)));
 
-    fac             =         n: if n == 1 then 1 else fac (n - 1) * n;
+    fix-let-inner      =              f: let x = f x; in x;
+    fix-let-inner'     =              f: let x = f x; in f x;
+    fix-let-inner''    =              f: let x = f x; in f f x;
+    fix-let-inner'''   =              f: let x = f x; in f f f x;
 
-    fac-let-outer   = 
+    fix-attr-nonrec    = (    { fix = f: let x = f x; in x; }).fix;
+    fix-attr-nonrec'   = (    { fix = f: let x = f x; in f x; }).fix;
+    fix-attr-nonrec''  = (    { fix = f: let x = f x; in f f x; }).fix;
+    fix-attr-nonrec''' = (    { fix = f: let x = f x; in f f f x; }).fix;
+
+    fix-attr-rec       = (rec { fix = f: f (fix f);         }).fix;
+    fix-attr-rec'      = (rec { fix = f: f (f (fix f));         }).fix;
+    fix-attr-rec''     = (rec { fix = f: f (f (f (fix f)));         }).fix;
+    fix-attr-rec'''    = (rec { fix = f: f (f (f (f (fix f))));         }).fix;
+
+
+    fac                =         n: if n == 1 then 1 else fac (n - 1) * n;
+
+    fac-let-outer      =
         fix-let-outer   (fac: n: if n == 1 then 1 else fac (n - 1) * n);
 
-    fac-let-inner   = 
+    fac-let-inner      =
         fix-let-inner   (fac: n: if n == 1 then 1 else fac (n - 1) * n);
 
-    fac-attr-nonrec =
+    fac-attr-nonrec    =
         fix-attr-nonrec (fac: n: if n == 1 then 1 else fac (n - 1) * n);
 
-    fac-attr-rec    = 
+    fac-attr-rec       =
         fix-attr-rec    (fac: n: if n == 1 then 1 else fac (n - 1) * n);
 
     test = (import ./test.nix).assertAllTrue ({assertTrue, ...}: [
@@ -42,4 +56,3 @@ let
     ]);
 
 in { inherit test; }
-
