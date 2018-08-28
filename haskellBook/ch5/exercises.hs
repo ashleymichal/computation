@@ -57,3 +57,10 @@ r = undefined
 
 co :: (b -> c) -> (a -> b) -> a -> c
 co bToC aToB a = bToC (aToB a)
+
+g :: (a -> c) -> a -> a
+g aToC a = a
+
+g' :: (a -> b) -> a -> b
+g' aToB a = aToB a
+
