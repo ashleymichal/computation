@@ -1,0 +1,229 @@
+Last login: Mon Oct  8 09:26:29 on ttys002
+Welcome to fish, the friendly interactive shell
+~ $ cd computation/haskellBook/ch6
+~/c/h/ch6 (master↑2|✚1) $ cd ../..
+~/computation (master↑2|✚1…) $ ls
+README.md         TODO.md           battleship        flipId.hs         functions         haskellBook       hello             lambda-boolean.py list              nix               set
+~/computation (master↑2|✚1…) $ cd list/haskell/src/
+~/c/l/h/src (master↑2|✚1…) $ atom .
+~/c/l/h/src (master↑2|✚1…) $ stack ghci
+lists-0.1.0.0: initial-build-steps (lib + exe)
+The following GHC options are incompatible with GHCi and have not been passed to it: -Werror -threaded
+Configuring GHCi with the following packages: lists
+Using main module: 1. Package `lists' component exe:lists-exe with main-is file: /Users/ashley.lewis/computation/list/haskell/app/Main.hs
+GHCi, version 8.2.2: http://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /Users/ashley.lewis/.ghci
+[1 of 4] Compiling Lib              ( Lib.hs, interpreted )
+[2 of 4] Compiling List             ( List.hs, interpreted )
+[3 of 4] Compiling Main             ( /Users/ashley.lewis/computation/list/haskell/app/Main.hs, interpreted )
+[4 of 4] Compiling Option           ( Option.hs, interpreted )
+Ok, four modules loaded.
+Loaded GHCi configuration from /private/var/folders/tp/t1kyvrt91jn5gsvcg71d5r4c0000gn/T/ghci18670/ghci-script
+*Main Lib List Option> :t show
+show :: Show a => a -> String
+*Main Lib List Option> :info Show
+class Show a where
+  showsPrec :: Int -> a -> ShowS
+  show :: a -> String
+  showList :: [a] -> ShowS
+  {-# MINIMAL showsPrec | show #-}
+  	-- Defined in ‘GHC.Show’
+instance [safe] Show a => Show (Option a)
+  -- Defined at Option.hs:4:40
+instance [safe] Show a => Show (List a) -- Defined at List.hs:6:10
+instance (Show b, Show a) => Show (Either a b)
+  -- Defined in ‘Data.Either’
+instance Show a => Show [a] -- Defined in ‘GHC.Show’
+instance Show Word -- Defined in ‘GHC.Show’
+instance Show Ordering -- Defined in ‘GHC.Show’
+instance Show a => Show (Maybe a) -- Defined in ‘GHC.Show’
+instance Show Integer -- Defined in ‘GHC.Show’
+instance Show Int -- Defined in ‘GHC.Show’
+instance Show Char -- Defined in ‘GHC.Show’
+instance Show Bool -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j, Show k, Show l, Show m, Show n, Show o) =>
+         Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j, Show k, Show l, Show m, Show n) =>
+         Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j, Show k, Show l, Show m) =>
+         Show (a, b, c, d, e, f, g, h, i, j, k, l, m)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j, Show k, Show l) =>
+         Show (a, b, c, d, e, f, g, h, i, j, k, l)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j, Show k) =>
+         Show (a, b, c, d, e, f, g, h, i, j, k)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i, Show j) =>
+         Show (a, b, c, d, e, f, g, h, i, j)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h, Show i) =>
+         Show (a, b, c, d, e, f, g, h, i)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+          Show h) =>
+         Show (a, b, c, d, e, f, g, h)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f,
+          Show g) =>
+         Show (a, b, c, d, e, f, g)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e, Show f) =>
+         Show (a, b, c, d, e, f)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d, Show e) =>
+         Show (a, b, c, d, e)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c, Show d) => Show (a, b, c, d)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b, Show c) => Show (a, b, c)
+  -- Defined in ‘GHC.Show’
+instance (Show a, Show b) => Show (a, b) -- Defined in ‘GHC.Show’
+instance Show () -- Defined in ‘GHC.Show’
+instance Show Float -- Defined in ‘GHC.Float’
+instance Show Double -- Defined in ‘GHC.Float’
+*Main Lib List Option> :info Applicative
+class Functor f => Applicative (f :: * -> *) where
+  pure :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+  GHC.Base.liftA2 :: (a -> b -> c) -> f a -> f b -> f c
+  (*>) :: f a -> f b -> f b
+  (<*) :: f a -> f b -> f a
+  {-# MINIMAL pure, ((<*>) | liftA2) #-}
+  	-- Defined in ‘GHC.Base’
+instance Applicative (Either e) -- Defined in ‘Data.Either’
+instance Applicative [] -- Defined in ‘GHC.Base’
+instance Applicative Maybe -- Defined in ‘GHC.Base’
+instance Applicative IO -- Defined in ‘GHC.Base’
+instance Applicative ((->) a) -- Defined in ‘GHC.Base’
+instance Monoid a => Applicative ((,) a) -- Defined in ‘GHC.Base’
+*Main Lib List Option> pure 1 :: List Int
+
+<interactive>:4:1: error:
+    • No instance for (Applicative List) arising from a use of ‘pure’
+    • In the expression: pure 1 :: List Int
+      In an equation for ‘it’: it = pure 1 :: List Int
+*Main Lib List Option> pure 1 :: [Int]
+[1]
+*Main Lib List Option> pure 1 :: Maybe Int
+Just 1
+*Main Lib List Option> (+) 1 2
+
+<interactive>:7:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show a0) arising from a use of ‘print’ at <interactive>:7:1-7
+        (Num a0) arising from a use of ‘it’ at <interactive>:7:1-7
+    • In a stmt of an interactive GHCi command: print it
+3
+*Main Lib List Option> (+) 1 2 :: Int
+3
+*Main Lib List Option> (+) <$> Just 1 <*> Just 2
+
+<interactive>:9:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:9:1-25
+        (Num b0) arising from a use of ‘it’ at <interactive>:9:1-25
+    • In a stmt of an interactive GHCi command: print it
+Just 3
+*Main Lib List Option> (+) <$> Nothing <*> Just 2
+
+<interactive>:10:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:10:1-26
+        (Num b0) arising from a use of ‘it’ at <interactive>:10:1-26
+    • In a stmt of an interactive GHCi command: print it
+Nothing
+*Main Lib List Option> :t <$>
+
+<interactive>:1:1: error: parse error on input ‘<$>’
+*Main Lib List Option> :t (<$>)
+(<$>) :: Functor f => (a -> b) -> f a -> f b
+*Main Lib List Option> :t (<*>)
+(<*>) :: Applicative f => f (a -> b) -> f a -> f b
+*Main Lib List Option> (+) <$> Just 1 <*> Just 2
+
+<interactive>:14:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:14:1-25
+        (Num b0) arising from a use of ‘it’ at <interactive>:14:1-25
+    • In a stmt of an interactive GHCi command: print it
+Just 3
+*Main Lib List Option> (+) <$> [1] <*> [2]
+
+<interactive>:15:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:15:1-19
+        (Num b0) arising from a use of ‘it’ at <interactive>:15:1-19
+    • In a stmt of an interactive GHCi command: print it
+[3]
+*Main Lib List Option> (+) <$> [1] <*> []
+
+<interactive>:16:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:16:1-18
+        (Num b0) arising from a use of ‘it’ at <interactive>:16:1-18
+    • In a stmt of an interactive GHCi command: print it
+[]
+*Main Lib List Option> (+) <$> [1, 2, 3] <*> [5, 6]
+
+<interactive>:17:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:17:1-28
+        (Num b0) arising from a use of ‘it’ at <interactive>:17:1-28
+    • In a stmt of an interactive GHCi command: print it
+[6,7,7,8,8,9]
+*Main Lib List Option> (*) <$> [1, 2, 3] <*> [1, 10]
+
+<interactive>:18:1: warning: [-Wtype-defaults]
+    • Defaulting the following constraints to type ‘Integer’
+        (Show b0) arising from a use of ‘print’ at <interactive>:18:1-29
+        (Num b0) arising from a use of ‘it’ at <interactive>:18:1-29
+    • In a stmt of an interactive GHCi command: print it
+[1,10,2,20,3,30]
+*Main Lib List Option> :info Applicative
+class Functor f => Applicative (f :: * -> *) where
+  pure :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+  GHC.Base.liftA2 :: (a -> b -> c) -> f a -> f b -> f c
+  (*>) :: f a -> f b -> f b
+  (<*) :: f a -> f b -> f a
+  {-# MINIMAL pure, ((<*>) | liftA2) #-}
+  	-- Defined in ‘GHC.Base’
+instance Applicative (Either e) -- Defined in ‘Data.Either’
+instance Applicative [] -- Defined in ‘GHC.Base’
+instance Applicative Maybe -- Defined in ‘GHC.Base’
+instance Applicative IO -- Defined in ‘GHC.Base’
+instance Applicative ((->) a) -- Defined in ‘GHC.Base’
+instance Monoid a => Applicative ((,) a) -- Defined in ‘GHC.Base’
+*Main Lib List Option> getLine
+something
+"something"
+*Main Lib List Option> :t getline
+
+<interactive>:1:1: error:
+    • Variable not in scope: getline
+    • Perhaps you meant ‘getLine’ (imported from Prelude)
+*Main Lib List Option> :t getLine
+getLine :: IO String
+*Main Lib List Option> (++) <$> getLine <*> getLine
+helll^?o^?^?^?
+world
+"helll\DELo\DEL\DEL\DELworld"
+*Main Lib List Option> (++) <$> getLine <*> getLine
+heloo 
+world
+"heloo world"
+*Main Lib List Option> (++) <$> getLine <*> getLine
+hello 
+world!
+"hello world!"
+*Main Lib List Option> 
