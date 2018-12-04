@@ -1,6 +1,16 @@
 module List where
 
+
 data List a = Cons a (List a) | Nil
+
+instance Eq a => Eq (List a) where
+    Nil          == Nil          = True
+    Nil          == (Cons _h _t) = False
+    (Cons _h _t) == Nil          = False
+    (Cons h1 t1) == (Cons h2 t2) = (h1 == h2) && (t1 == t2)
+
+-- instance Functor List where
+  -- definition
 
 instance Show a => Show (List a) where
     -- show (Cons h t) = show h ++ ":" ++ show t
@@ -67,4 +77,3 @@ lMap'' f = lMatch Nil $ \h t -> Cons (f h) (lMap'' f t)
 
 lMap''' :: (a -> b) -> List a -> List b
 lMap''' f = lFoldR Nil $ \h t -> Cons (f h) t
-

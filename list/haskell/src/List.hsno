@@ -1,0 +1,31 @@
+module List where
+
+
+data List a = Cons a (List a) | Nil
+
+instance Show a => Show (List a) where
+    -- show (Cons h t) = show h ++ ":" ++ show t
+    -- show Nil = "[]"
+    show = show . toHsList
+
+toHsList :: List a -> [a]
+toHsList = lFoldR [] (:)
+
+lFoldR :: b -> (a -> b -> b) -> List a -> b
+lFoldR ifNil _ifCons Nil       = ifNil
+lFoldR ifNil ifCons (Cons h t) = ifCons h (lFoldR ifNil ifCons t)
+
+lMap :: (a -> b) -> List a -> List b
+lMap _f Nil = Nil
+lMap f (Cons h t) = Cons (f h) (lMap f t)
+
+lMap' :: (a -> b) -> List a -> List b
+lMap' f l =
+    case l of
+        Cons h t -> Cons (f h) (lMap' f t)
+        Nil      -> Nil
+
+lFoldL :: b -> (b -> a -> b) -> List a -> b
+lFoldL ifNil _ifCons Nil       = ifNil
+lFoldL ifNil ifCons (Cons h t) = ifCons (lFoldL ifNil ifCons t) h
+
